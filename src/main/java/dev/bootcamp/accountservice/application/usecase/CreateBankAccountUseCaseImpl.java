@@ -10,6 +10,7 @@ import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private final BankAccountRepository bankAccountRepository;
@@ -28,8 +29,10 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     }
 
     @Override
-    public CheckingAccount openCheckingAccount(Long customerId, BigDecimal maintenanceFee) {
-        CheckingAccount account = new CheckingAccount(findCustomer(customerId), maintenanceFee);
+    public CheckingAccount openCheckingAccount(Long customerId, BigDecimal maintenanceFee,
+                                               List<Long> holderIds, List<Long> authorizedSignerIds) {
+        CheckingAccount account = new CheckingAccount(
+                findCustomer(customerId), maintenanceFee, holderIds, authorizedSignerIds);
         validatePersonalLimit(account);
         return (CheckingAccount) bankAccountRepository.save(account);
     }
