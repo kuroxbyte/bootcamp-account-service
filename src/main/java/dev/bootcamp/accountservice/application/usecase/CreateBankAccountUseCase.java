@@ -12,6 +12,8 @@ import java.math.BigDecimal;
  * <p>Reglas:
  * <ul>
  *   <li>El cliente debe existir en customer-service.</li>
+ *   <li>Cliente personal: máximo una cuenta de ahorro y una cuenta corriente;
+ *       cuentas a plazo fijo sin límite.</li>
  * </ul>
  */
 public interface CreateBankAccountUseCase {
@@ -23,6 +25,7 @@ public interface CreateBankAccountUseCase {
      * @param maxMonthlyMovements límite máximo de movimientos mensuales
      * @return la cuenta guardada
      * @throws BusinessRuleException si el cliente no existe
+     *                               o es personal y ya tiene una cuenta de ahorro
      */
     SavingsAccount openSavingsAccount(Long customerId, int maxMonthlyMovements);
 
@@ -33,6 +36,7 @@ public interface CreateBankAccountUseCase {
      * @param maintenanceFee comisión de mantenimiento
      * @return la cuenta guardada
      * @throws BusinessRuleException si el cliente no existe
+     *                               o es personal y ya tiene una cuenta corriente
      */
     CheckingAccount openCheckingAccount(Long customerId, BigDecimal maintenanceFee);
 
