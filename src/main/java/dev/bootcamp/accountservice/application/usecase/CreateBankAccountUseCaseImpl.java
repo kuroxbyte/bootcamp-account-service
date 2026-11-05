@@ -25,7 +25,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     public SavingsAccount openSavingsAccount(Long customerId, int maxMonthlyMovements) {
         SavingsAccount account = new SavingsAccount(findCustomer(customerId), maxMonthlyMovements);
         validatePersonalLimit(account);
-        return (SavingsAccount) bankAccountRepository.save(account);
+        return bankAccountRepository.save(account);
     }
 
     @Override
@@ -34,13 +34,13 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
         CheckingAccount account = new CheckingAccount(
                 findCustomer(customerId), maintenanceFee, holderIds, authorizedSignerIds);
         validatePersonalLimit(account);
-        return (CheckingAccount) bankAccountRepository.save(account);
+        return bankAccountRepository.save(account);
     }
 
     @Override
     public FixedTermAccount openFixedTermAccount(Long customerId, int movementDayOfMonth) {
         FixedTermAccount account = new FixedTermAccount(findCustomer(customerId), movementDayOfMonth);
-        return (FixedTermAccount) bankAccountRepository.save(account);
+        return bankAccountRepository.save(account);
     }
 
     private Customer findCustomer(Long customerId) {
