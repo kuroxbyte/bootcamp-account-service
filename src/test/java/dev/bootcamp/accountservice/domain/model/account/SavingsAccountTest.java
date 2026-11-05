@@ -1,0 +1,25 @@
+package dev.bootcamp.accountservice.domain.model.account;
+
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
+import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
+import org.junit.jupiter.api.Test;
+
+class SavingsAccountTest {
+
+    private final Customer personal = new Customer(1L, CustomerType.PERSONAL);
+
+    @Test
+    void createsWithPositiveMovementLimit() {
+        assertThatCode(() -> new SavingsAccount(personal, 5)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void rejectsNonPositiveMovementLimit() {
+        assertThatThrownBy(() -> new SavingsAccount(personal, 0))
+                .isInstanceOf(BusinessRuleException.class);
+    }
+}
