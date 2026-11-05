@@ -27,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class CreateBankAccountUseCaseImplTest {
 
     private static final Customer PERSONAL = new Customer(1L, CustomerType.PERSONAL);
+    private static final Customer BUSINESS = new Customer(2L, CustomerType.BUSINESS);
 
     @Mock
     private BankAccountRepository bankAccountRepository;
@@ -99,5 +100,35 @@ class CreateBankAccountUseCaseImplTest {
 
         verify(bankAccountRepository, never()).findByCustomerId(any());
         verify(bankAccountRepository, times(2)).save(any());
+    }
+
+    @Test
+    void businessCustomerCanOpenMultipleCheckingAccounts() {
+        when(customerClient.findById(2L)).thenReturn(Optional.of(BUSINESS));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        useCase.openCheckingAccount(2L, BigDecimal.TEN);
+        useCase.openCheckingAccount(2L, BigDecimal.TEN);
+
+        verify(bankAccountRepository, never()).findByCustomerId(any());
+        verify(bankAccountRepository, times(2)).save(any(CheckingAccount.class));
+    }
+
+    @Test
+    void businessCustomerCannotOpenSavingsAccount() {
+        when(customerClient.findById(2L)).thenReturn(Optional.of(BUSINESS));
+
+        assertThatThrownBy(() -> useCase.openSavingsAccount(2L, 5))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void businessCustomerCannotOpenFixedTermAccount() {
+        when(customerClient.findById(2L)).thenReturn(Optional.of(BUSINESS));
+
+        assertThatThrownBy(() -> useCase.openFixedTermAccount(2L, 15))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
     }
 }

@@ -1,5 +1,6 @@
 package dev.bootcamp.accountservice.domain.model.account;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
@@ -18,5 +19,13 @@ class CheckingAccountTest {
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(() -> new CheckingAccount(personal, BigDecimal.ZERO))
                 .isInstanceOf(BusinessRuleException.class);
+    }
+
+    @Test
+    void allowsBusinessCustomer() {
+        Customer business = new Customer(2L, CustomerType.BUSINESS);
+
+        assertThatCode(() -> new CheckingAccount(business, BigDecimal.TEN))
+                .doesNotThrowAnyException();
     }
 }

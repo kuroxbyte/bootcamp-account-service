@@ -24,4 +24,12 @@ class FixedTermAccountTest {
         assertThatThrownBy(() -> new FixedTermAccount(personal, 32))
                 .isInstanceOf(BusinessRuleException.class);
     }
+
+    @Test
+    void rejectsBusinessCustomer() {
+        Customer business = new Customer(2L, CustomerType.BUSINESS);
+
+        assertThatThrownBy(() -> new FixedTermAccount(business, 15))
+                .isInstanceOf(BusinessRuleException.class);
+    }
 }
