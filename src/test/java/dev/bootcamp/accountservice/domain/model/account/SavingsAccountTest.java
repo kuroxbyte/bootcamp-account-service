@@ -22,4 +22,12 @@ class SavingsAccountTest {
         assertThatThrownBy(() -> new SavingsAccount(personal, 0))
                 .isInstanceOf(BusinessRuleException.class);
     }
+
+    @Test
+    void rejectsBusinessCustomer() {
+        Customer business = new Customer(2L, CustomerType.BUSINESS);
+
+        assertThatThrownBy(() -> new SavingsAccount(business, 5))
+                .isInstanceOf(BusinessRuleException.class);
+    }
 }

@@ -2,6 +2,7 @@ package dev.bootcamp.accountservice.domain.model.account;
 
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import lombok.Getter;
 
 /**
@@ -14,6 +15,9 @@ public class FixedTermAccount extends BankAccount {
 
     public FixedTermAccount(Customer customer, int movementDayOfMonth) {
         super(customer);
+        if (customer.type() == CustomerType.BUSINESS) {
+            throw new BusinessRuleException("Un cliente empresarial no puede tener una cuenta a plazo fijo");
+        }
         if (movementDayOfMonth < 1 || movementDayOfMonth > 31) {
             throw new BusinessRuleException("El día de movimiento debe estar entre 1 y 31");
         }
