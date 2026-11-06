@@ -9,6 +9,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
+import io.reactivex.rxjava3.core.Single;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -22,42 +23,43 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     }
 
     @Override
-    public SavingsAccount openSavingsAccount(String customerId, int maxMonthlyMovements) {
-        SavingsAccount account = new SavingsAccount(findCustomer(customerId), maxMonthlyMovements);
-        validatePersonalLimit(account);
-        return bankAccountRepository.save(account);
+    public Single<SavingsAccount> openSavingsAccount(String customerId, int maxMonthlyMovements) {
+        return findCustomer(customerId)
+                .map(customer -> new SavingsAccount(customer, maxMonthlyMovements))
+                .flatMap(this::validatePersonalLimit)
+                .flatMap(bankAccountRepository::save);
     }
 
     @Override
-    public CheckingAccount openCheckingAccount(String customerId, BigDecimal maintenanceFee,
-                                               List<String> holderIds, List<String> authorizedSignerIds) {
-        CheckingAccount account = new CheckingAccount(
-                findCustomer(customerId), maintenanceFee, holderIds, authorizedSignerIds);
-        validatePersonalLimit(account);
-        return bankAccountRepository.save(account);
+    public Single<CheckingAccount> openCheckingAccount(String customerId, BigDecimal maintenanceFee,
+                                                       List<String> holderIds, List<String> authorizedSignerIds) {
+        return findCustomer(customerId)
+                .map(customer -> new CheckingAccount(customer, maintenanceFee, holderIds, authorizedSignerIds))
+                .flatMap(this::validatePersonalLimit)
+                .flatMap(bankAccountRepository::save);
     }
 
     @Override
-    public FixedTermAccount openFixedTermAccount(String customerId, int movementDayOfMonth) {
-        FixedTermAccount account = new FixedTermAccount(findCustomer(customerId), movementDayOfMonth);
-        return bankAccountRepository.save(account);
+    public Single<FixedTermAccount> openFixedTermAccount(String customerId, int movementDayOfMonth) {
+        return findCustomer(customerId)
+                .map(customer -> new FixedTermAccount(customer, movementDayOfMonth))
+                .flatMap(bankAccountRepository::save);
     }
 
-    private Customer findCustomer(String customerId) {
+    private Single<Customer> findCustomer(String customerId) {
         return customerClient.findById(customerId)
-                .orElseThrow(() -> new BusinessRuleException("El cliente no existe"));
+                .switchIfEmpty(Single.error(() -> new BusinessRuleException("El cliente no existe")));
     }
 
     // Personal: máximo una cuenta de ahorro y una cuenta corriente.
-    private void validatePersonalLimit(BankAccount account) {
+    private <T extends BankAccount> Single<T> validatePersonalLimit(T account) {
         if (account.getCustomer().type() != CustomerType.PERSONAL) {
-            return;
+            return Single.just(account);
         }
-        boolean alreadyHasSameType = bankAccountRepository.findByCustomerId(account.getCustomer().id())
-                .stream()
-                .anyMatch(existing -> existing.getClass() == account.getClass());
-        if (alreadyHasSameType) {
-            throw new BusinessRuleException("Un cliente personal solo puede tener una cuenta de este tipo");
-        }
+        return bankAccountRepository.findByCustomerId(account.getCustomer().id())
+                .any(existing -> existing.getClass() == account.getClass())
+                .flatMap(alreadyHasSameType -> alreadyHasSameType
+                        ? Single.error(new BusinessRuleException("Un cliente personal solo puede tener una cuenta de este tipo"))
+                        : Single.just(account));
     }
 }
