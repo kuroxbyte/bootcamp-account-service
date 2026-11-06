@@ -4,6 +4,7 @@ import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import io.reactivex.rxjava3.core.Single;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -19,6 +20,10 @@ import java.util.List;
  *       cuentas corrientes sin límite.</li>
  *   <li>Cuenta empresarial: uno o más titulares y cero o más firmantes autorizados.</li>
  * </ul>
+ *
+ * <p>Los métodos son reactivos: no hacen nada hasta que se suscribe al {@link Single}.
+ * Si se incumple una regla, el {@link Single} termina con error {@link BusinessRuleException}
+ * y la cuenta no se guarda.
  */
 public interface CreateBankAccountUseCase {
 
@@ -27,11 +32,10 @@ public interface CreateBankAccountUseCase {
      *
      * @param customerId          id del cliente en customer-service
      * @param maxMonthlyMovements límite máximo de movimientos mensuales
-     * @return la cuenta guardada
-     * @throws BusinessRuleException si el cliente no existe, es empresarial,
-     *                               o es personal y ya tiene una cuenta de ahorro
+     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe,
+     *         es empresarial, o es personal y ya tiene una cuenta de ahorro
      */
-    SavingsAccount openSavingsAccount(String customerId, int maxMonthlyMovements);
+    Single<SavingsAccount> openSavingsAccount(String customerId, int maxMonthlyMovements);
 
     /**
      * Abre una cuenta corriente.
@@ -40,20 +44,19 @@ public interface CreateBankAccountUseCase {
      * @param maintenanceFee      comisión de mantenimiento
      * @param holderIds           titulares de la cuenta (obligatorio al menos uno si es empresarial)
      * @param authorizedSignerIds firmantes autorizados (puede estar vacío)
-     * @return la cuenta guardada
-     * @throws BusinessRuleException si el cliente no existe, es personal y ya tiene una
-     *                               cuenta corriente, o es empresarial y no tiene titulares
+     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe,
+     *         es personal y ya tiene una cuenta corriente, o es empresarial y no tiene titulares
      */
-    CheckingAccount openCheckingAccount(String customerId, BigDecimal maintenanceFee,
-                                        List<String> holderIds, List<String> authorizedSignerIds);
+    Single<CheckingAccount> openCheckingAccount(String customerId, BigDecimal maintenanceFee,
+                                                List<String> holderIds, List<String> authorizedSignerIds);
 
     /**
      * Abre una cuenta a plazo fijo.
      *
      * @param customerId         id del cliente en customer-service
      * @param movementDayOfMonth día del mes en que se permite el único movimiento
-     * @return la cuenta guardada
-     * @throws BusinessRuleException si el cliente no existe o es empresarial
+     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe
+     *         o es empresarial
      */
-    FixedTermAccount openFixedTermAccount(String customerId, int movementDayOfMonth);
+    Single<FixedTermAccount> openFixedTermAccount(String customerId, int movementDayOfMonth);
 }

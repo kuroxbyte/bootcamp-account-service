@@ -1,7 +1,6 @@
 package dev.bootcamp.accountservice.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -15,9 +14,11 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
+import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -41,63 +42,60 @@ class CreateBankAccountUseCaseImplTest {
 
     @Test
     void rejectsUnknownCustomer() {
-        when(customerClient.findById("99")).thenReturn(Optional.empty());
+        when(customerClient.findById("99")).thenReturn(Maybe.empty());
 
-        assertThatThrownBy(() -> useCase.openCheckingAccount("99", BigDecimal.TEN, List.of(), List.of()))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openCheckingAccount("99", BigDecimal.TEN, List.of(), List.of()).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void personalCustomerCanOpenFirstSavingsAccount() {
-        when(customerClient.findById("1")).thenReturn(Optional.of(PERSONAL));
-        when(bankAccountRepository.findByCustomerId("1")).thenReturn(List.of());
-        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.findByCustomerId("1")).thenReturn(Flowable.empty());
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
-        useCase.openSavingsAccount("1", 5);
+        useCase.openSavingsAccount("1", 5).test().assertComplete();
 
         verify(bankAccountRepository).save(any(SavingsAccount.class));
     }
 
     @Test
     void personalCustomerCannotOpenSecondSavingsAccount() {
-        when(customerClient.findById("1")).thenReturn(Optional.of(PERSONAL));
-        when(bankAccountRepository.findByCustomerId("1")).thenReturn(List.of(new SavingsAccount(PERSONAL, 5)));
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.findByCustomerId("1")).thenReturn(Flowable.just(new SavingsAccount(PERSONAL, 5)));
 
-        assertThatThrownBy(() -> useCase.openSavingsAccount("1", 5))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openSavingsAccount("1", 5).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void personalCustomerCannotOpenSecondCheckingAccount() {
-        when(customerClient.findById("1")).thenReturn(Optional.of(PERSONAL));
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
         when(bankAccountRepository.findByCustomerId("1"))
-                .thenReturn(List.of(new CheckingAccount(PERSONAL, BigDecimal.TEN, List.of(), List.of())));
+                .thenReturn(Flowable.just(new CheckingAccount(PERSONAL, BigDecimal.TEN, List.of(), List.of())));
 
-        assertThatThrownBy(() -> useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of()))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of()).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void personalCustomerCanHaveOneSavingsAndOneCheckingAccount() {
-        when(customerClient.findById("1")).thenReturn(Optional.of(PERSONAL));
-        when(bankAccountRepository.findByCustomerId("1")).thenReturn(List.of(new SavingsAccount(PERSONAL, 5)));
-        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.findByCustomerId("1")).thenReturn(Flowable.just(new SavingsAccount(PERSONAL, 5)));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
-        useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of());
+        useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of()).test().assertComplete();
 
         verify(bankAccountRepository).save(any(CheckingAccount.class));
     }
 
     @Test
     void personalCustomerCanOpenMultipleFixedTermAccounts() {
-        when(customerClient.findById("1")).thenReturn(Optional.of(PERSONAL));
-        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
-        useCase.openFixedTermAccount("1", 10);
-        useCase.openFixedTermAccount("1", 20);
+        useCase.openFixedTermAccount("1", 10).test().assertComplete();
+        useCase.openFixedTermAccount("1", 20).test().assertComplete();
 
         verify(bankAccountRepository, never()).findByCustomerId(any());
         verify(bankAccountRepository, times(2)).save(any());
@@ -105,11 +103,11 @@ class CreateBankAccountUseCaseImplTest {
 
     @Test
     void businessCustomerCanOpenMultipleCheckingAccounts() {
-        when(customerClient.findById("2")).thenReturn(Optional.of(BUSINESS));
-        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(customerClient.findById("2")).thenReturn(Maybe.just(BUSINESS));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
-        useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10"), List.of());
-        useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10"), List.of());
+        useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10"), List.of()).test().assertComplete();
+        useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10"), List.of()).test().assertComplete();
 
         verify(bankAccountRepository, never()).findByCustomerId(any());
         verify(bankAccountRepository, times(2)).save(any(CheckingAccount.class));
@@ -117,37 +115,35 @@ class CreateBankAccountUseCaseImplTest {
 
     @Test
     void businessCustomerCannotOpenSavingsAccount() {
-        when(customerClient.findById("2")).thenReturn(Optional.of(BUSINESS));
+        when(customerClient.findById("2")).thenReturn(Maybe.just(BUSINESS));
 
-        assertThatThrownBy(() -> useCase.openSavingsAccount("2", 5))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openSavingsAccount("2", 5).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void businessCustomerCannotOpenFixedTermAccount() {
-        when(customerClient.findById("2")).thenReturn(Optional.of(BUSINESS));
+        when(customerClient.findById("2")).thenReturn(Maybe.just(BUSINESS));
 
-        assertThatThrownBy(() -> useCase.openFixedTermAccount("2", 15))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openFixedTermAccount("2", 15).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void businessCustomerCannotOpenCheckingAccountWithoutHolders() {
-        when(customerClient.findById("2")).thenReturn(Optional.of(BUSINESS));
+        when(customerClient.findById("2")).thenReturn(Maybe.just(BUSINESS));
 
-        assertThatThrownBy(() -> useCase.openCheckingAccount("2", BigDecimal.TEN, List.of(), List.of("20")))
-                .isInstanceOf(BusinessRuleException.class);
+        useCase.openCheckingAccount("2", BigDecimal.TEN, List.of(), List.of("20")).test().assertError(BusinessRuleException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 
     @Test
     void businessCustomerOpensCheckingAccountWithHoldersAndSigners() {
-        when(customerClient.findById("2")).thenReturn(Optional.of(BUSINESS));
-        when(bankAccountRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(customerClient.findById("2")).thenReturn(Maybe.just(BUSINESS));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
-        CheckingAccount account = useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10", "11"), List.of("20"));
+        CheckingAccount account = useCase.openCheckingAccount("2", BigDecimal.TEN, List.of("10", "11"), List.of("20"))
+                .blockingGet();
 
         assertThat(account.getHolderIds()).containsExactly("10", "11");
         assertThat(account.getAuthorizedSignerIds()).containsExactly("20");
