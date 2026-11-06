@@ -31,7 +31,7 @@ public interface CreateBankAccountUseCase {
      * @throws BusinessRuleException si el cliente no existe, es empresarial,
      *                               o es personal y ya tiene una cuenta de ahorro
      */
-    SavingsAccount openSavingsAccount(Long customerId, int maxMonthlyMovements);
+    SavingsAccount openSavingsAccount(String customerId, int maxMonthlyMovements);
 
     /**
      * Abre una cuenta corriente.
@@ -44,8 +44,8 @@ public interface CreateBankAccountUseCase {
      * @throws BusinessRuleException si el cliente no existe, es personal y ya tiene una
      *                               cuenta corriente, o es empresarial y no tiene titulares
      */
-    CheckingAccount openCheckingAccount(Long customerId, BigDecimal maintenanceFee,
-                                        List<Long> holderIds, List<Long> authorizedSignerIds);
+    CheckingAccount openCheckingAccount(String customerId, BigDecimal maintenanceFee,
+                                        List<String> holderIds, List<String> authorizedSignerIds);
 
     /**
      * Abre una cuenta a plazo fijo.
@@ -55,5 +55,5 @@ public interface CreateBankAccountUseCase {
      * @return la cuenta guardada
      * @throws BusinessRuleException si el cliente no existe o es empresarial
      */
-    FixedTermAccount openFixedTermAccount(Long customerId, int movementDayOfMonth);
+    FixedTermAccount openFixedTermAccount(String customerId, int movementDayOfMonth);
 }

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class FixedTermAccountTest {
 
-    private final Customer personal = new Customer(1L, CustomerType.PERSONAL);
+    private final Customer personal = new Customer("1", CustomerType.PERSONAL);
 
     @Test
     void createsWithValidMovementDay() {
@@ -27,7 +27,7 @@ class FixedTermAccountTest {
 
     @Test
     void rejectsBusinessCustomer() {
-        Customer business = new Customer(2L, CustomerType.BUSINESS);
+        Customer business = new Customer("2", CustomerType.BUSINESS);
 
         assertThatThrownBy(() -> new FixedTermAccount(business, 15))
                 .isInstanceOf(BusinessRuleException.class);

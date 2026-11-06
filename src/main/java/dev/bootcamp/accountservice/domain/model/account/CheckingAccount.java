@@ -14,11 +14,11 @@ import lombok.Getter;
 @Getter
 public class CheckingAccount extends BankAccount {
     private final BigDecimal maintenanceFee;
-    private final List<Long> holderIds;
-    private final List<Long> authorizedSignerIds;
+    private final List<String> holderIds;
+    private final List<String> authorizedSignerIds;
 
     public CheckingAccount(Customer customer, BigDecimal maintenanceFee,
-                           List<Long> holderIds, List<Long> authorizedSignerIds) {
+                           List<String> holderIds, List<String> authorizedSignerIds) {
         super(customer);
         if (maintenanceFee == null || maintenanceFee.signum() <= 0) {
             throw new BusinessRuleException("La cuenta corriente debe tener comisión de mantenimiento");

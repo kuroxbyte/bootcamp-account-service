@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test;
 
 class CheckingAccountTest {
 
-    private final Customer personal = new Customer(1L, CustomerType.PERSONAL);
-    private final Customer business = new Customer(2L, CustomerType.BUSINESS);
+    private final Customer personal = new Customer("1", CustomerType.PERSONAL);
+    private final Customer business = new Customer("2", CustomerType.BUSINESS);
 
     @Test
     void requiresMaintenanceFee() {
@@ -26,7 +26,7 @@ class CheckingAccountTest {
 
     @Test
     void allowsBusinessCustomer() {
-        assertThatCode(() -> new CheckingAccount(business, BigDecimal.TEN, List.of(10L), List.of()))
+        assertThatCode(() -> new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of()))
                 .doesNotThrowAnyException();
     }
 
@@ -40,17 +40,17 @@ class CheckingAccountTest {
 
     @Test
     void businessAccountAllowsMultipleHolders() {
-        CheckingAccount account = new CheckingAccount(business, BigDecimal.TEN, List.of(10L, 11L), List.of());
+        CheckingAccount account = new CheckingAccount(business, BigDecimal.TEN, List.of("10", "11"), List.of());
 
-        assertThat(account.getHolderIds()).containsExactly(10L, 11L);
+        assertThat(account.getHolderIds()).containsExactly("10", "11");
     }
 
     @Test
     void businessAccountAllowsZeroOrMoreAuthorizedSigners() {
-        CheckingAccount withoutSigners = new CheckingAccount(business, BigDecimal.TEN, List.of(10L), null);
-        CheckingAccount withSigners = new CheckingAccount(business, BigDecimal.TEN, List.of(10L), List.of(20L, 21L));
+        CheckingAccount withoutSigners = new CheckingAccount(business, BigDecimal.TEN, List.of("10"), null);
+        CheckingAccount withSigners = new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of("20", "21"));
 
         assertThat(withoutSigners.getAuthorizedSignerIds()).isEmpty();
-        assertThat(withSigners.getAuthorizedSignerIds()).containsExactly(20L, 21L);
+        assertThat(withSigners.getAuthorizedSignerIds()).containsExactly("20", "21");
     }
 }
