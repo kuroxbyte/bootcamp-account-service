@@ -22,15 +22,15 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     }
 
     @Override
-    public SavingsAccount openSavingsAccount(Long customerId, int maxMonthlyMovements) {
+    public SavingsAccount openSavingsAccount(String customerId, int maxMonthlyMovements) {
         SavingsAccount account = new SavingsAccount(findCustomer(customerId), maxMonthlyMovements);
         validatePersonalLimit(account);
         return bankAccountRepository.save(account);
     }
 
     @Override
-    public CheckingAccount openCheckingAccount(Long customerId, BigDecimal maintenanceFee,
-                                               List<Long> holderIds, List<Long> authorizedSignerIds) {
+    public CheckingAccount openCheckingAccount(String customerId, BigDecimal maintenanceFee,
+                                               List<String> holderIds, List<String> authorizedSignerIds) {
         CheckingAccount account = new CheckingAccount(
                 findCustomer(customerId), maintenanceFee, holderIds, authorizedSignerIds);
         validatePersonalLimit(account);
@@ -38,12 +38,12 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     }
 
     @Override
-    public FixedTermAccount openFixedTermAccount(Long customerId, int movementDayOfMonth) {
+    public FixedTermAccount openFixedTermAccount(String customerId, int movementDayOfMonth) {
         FixedTermAccount account = new FixedTermAccount(findCustomer(customerId), movementDayOfMonth);
         return bankAccountRepository.save(account);
     }
 
-    private Customer findCustomer(Long customerId) {
+    private Customer findCustomer(String customerId) {
         return customerClient.findById(customerId)
                 .orElseThrow(() -> new BusinessRuleException("El cliente no existe"));
     }

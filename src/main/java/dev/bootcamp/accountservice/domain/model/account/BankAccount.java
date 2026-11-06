@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 public abstract class BankAccount {
     @Setter
-    private Long id;
+    private String id;
     private final Customer customer;
 
     protected BankAccount(Customer customer) {

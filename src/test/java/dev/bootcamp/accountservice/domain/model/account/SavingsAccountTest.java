@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class SavingsAccountTest {
 
-    private final Customer personal = new Customer(1L, CustomerType.PERSONAL);
+    private final Customer personal = new Customer("1", CustomerType.PERSONAL);
 
     @Test
     void createsWithPositiveMovementLimit() {
@@ -25,7 +25,7 @@ class SavingsAccountTest {
 
     @Test
     void rejectsBusinessCustomer() {
-        Customer business = new Customer(2L, CustomerType.BUSINESS);
+        Customer business = new Customer("2", CustomerType.BUSINESS);
 
         assertThatThrownBy(() -> new SavingsAccount(business, 5))
                 .isInstanceOf(BusinessRuleException.class);
