@@ -2,9 +2,15 @@ package dev.bootcamp.accountservice.application.port;
 
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 public interface BankAccountRepository {
+
+    /**
+     * @return la cuenta, o vacío si no existe
+     */
+    Maybe<BankAccount> findById(String accountId);
 
     /**
      * @return las cuentas del cliente (ninguna si no tiene)
