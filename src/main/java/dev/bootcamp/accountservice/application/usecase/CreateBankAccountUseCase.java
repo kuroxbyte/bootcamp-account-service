@@ -1,6 +1,7 @@
 package dev.bootcamp.accountservice.application.usecase;
 
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
+import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
@@ -21,9 +22,10 @@ import java.util.List;
  *   <li>Cuenta empresarial: uno o más titulares y cero o más firmantes autorizados.</li>
  * </ul>
  *
- * <p>Los métodos son reactivos: no hacen nada hasta que se suscribe al {@link Single}.
- * Si se incumple una regla, el {@link Single} termina con error {@link BusinessRuleException}
- * y la cuenta no se guarda.
+ * <p>Es reactivo: no hace nada hasta que se suscribe al {@link Single}. Termina con error
+ * {@link NotFoundException} si el cliente o el producto no existe (o no pertenece al cliente),
+ * y con error {@link BusinessRuleException} si se incumple una regla de negocio; en ambos
+ * casos no se guarda nada.
  */
 public interface CreateBankAccountUseCase {
 
@@ -32,8 +34,8 @@ public interface CreateBankAccountUseCase {
      *
      * @param customerId          id del cliente en customer-service
      * @param maxMonthlyMovements límite máximo de movimientos mensuales
-     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe,
-     *         es empresarial, o es personal y ya tiene una cuenta de ahorro
+     * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link BusinessRuleException} si es
+     *         empresarial, o es personal y ya tiene una cuenta de ahorro
      */
     Single<SavingsAccount> openSavingsAccount(String customerId, int maxMonthlyMovements);
 
@@ -44,8 +46,8 @@ public interface CreateBankAccountUseCase {
      * @param maintenanceFee      comisión de mantenimiento
      * @param holderIds           titulares de la cuenta (obligatorio al menos uno si es empresarial)
      * @param authorizedSignerIds firmantes autorizados (puede estar vacío)
-     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe,
-     *         es personal y ya tiene una cuenta corriente, o es empresarial y no tiene titulares
+     * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link BusinessRuleException} si es
+     *         personal y ya tiene una cuenta corriente, o es empresarial y no tiene titulares
      */
     Single<CheckingAccount> openCheckingAccount(String customerId, BigDecimal maintenanceFee,
                                                 List<String> holderIds, List<String> authorizedSignerIds);
@@ -55,8 +57,8 @@ public interface CreateBankAccountUseCase {
      *
      * @param customerId         id del cliente en customer-service
      * @param movementDayOfMonth día del mes en que se permite el único movimiento
-     * @return la cuenta guardada; error {@link BusinessRuleException} si el cliente no existe
-     *         o es empresarial
+     * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link BusinessRuleException} si es
+     *         empresarial
      */
     Single<FixedTermAccount> openFixedTermAccount(String customerId, int movementDayOfMonth);
 }
