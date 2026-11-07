@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
+import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
@@ -44,7 +45,7 @@ class CreateBankAccountUseCaseImplTest {
     void rejectsUnknownCustomer() {
         when(customerClient.findById("99")).thenReturn(Maybe.empty());
 
-        useCase.openCheckingAccount("99", BigDecimal.TEN, List.of(), List.of()).test().assertError(BusinessRuleException.class);
+        useCase.openCheckingAccount("99", BigDecimal.TEN, List.of(), List.of()).test().assertError(NotFoundException.class);
         verify(bankAccountRepository, never()).save(any());
     }
 

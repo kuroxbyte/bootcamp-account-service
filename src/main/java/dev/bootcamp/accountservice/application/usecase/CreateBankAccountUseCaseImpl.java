@@ -3,6 +3,7 @@ package dev.bootcamp.accountservice.application.usecase;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
+import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
@@ -48,7 +49,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
 
     private Single<Customer> findCustomer(String customerId) {
         return customerClient.findById(customerId)
-                .switchIfEmpty(Single.error(() -> new BusinessRuleException("El cliente no existe")));
+                .switchIfEmpty(Single.error(() -> new NotFoundException("El cliente no existe")));
     }
 
     // Personal: máximo una cuenta de ahorro y una cuenta corriente.
