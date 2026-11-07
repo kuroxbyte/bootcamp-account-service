@@ -16,6 +16,7 @@ import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Flowable;
+import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import io.reactivex.rxjava3.core.Single;
 import java.math.BigDecimal;
 import java.util.List;
@@ -184,5 +185,20 @@ class AccountControllerTest {
         webTestClient.get().uri("/api/v1/accounts/99")
                 .exchange()
                 .expectStatus().isNotFound();
+    }
+
+    @Test
+    void returnsServiceUnavailableWhenCustomerServiceIsDown() {
+        when(createBankAccountUseCase.openSavingsAccount("1", 5)).thenReturn(Single.error(
+                new ServiceUnavailableException("customer-service no está disponible", new RuntimeException())));
+
+        webTestClient.post().uri("/api/v1/accounts/savings")
+                .header("X-Customer-Id", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .exchange()
+                .expectStatus().isEqualTo(503)
+                .expectBody()
+                .jsonPath("$.detail").isEqualTo("customer-service no está disponible");
     }
 }
