@@ -14,11 +14,17 @@ import io.reactivex.rxjava3.core.Single;
 import java.math.BigDecimal;
 import java.util.List;
 
+/** Implementación de {@link CreateBankAccountUseCase}. */
 public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
+    private static final String PERSONAL_ACCOUNT_LIMIT =
+            "Un cliente personal solo puede tener una cuenta de este tipo";
+
     private final BankAccountRepository bankAccountRepository;
     private final CustomerClient customerClient;
 
-    public CreateBankAccountUseCaseImpl(BankAccountRepository bankAccountRepository, CustomerClient customerClient) {
+    /** Crea el caso de uso con los adaptadores de sus puertos. */
+    public CreateBankAccountUseCaseImpl(
+            BankAccountRepository bankAccountRepository, CustomerClient customerClient) {
         this.bankAccountRepository = bankAccountRepository;
         this.customerClient = customerClient;
     }
@@ -32,23 +38,31 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     }
 
     @Override
-    public Single<CheckingAccount> openCheckingAccount(String customerId, BigDecimal maintenanceFee,
-                                                       List<String> holderIds, List<String> authorizedSignerIds) {
+    public Single<CheckingAccount> openCheckingAccount(
+            String customerId,
+            BigDecimal maintenanceFee,
+            List<String> holderIds,
+            List<String> authorizedSignerIds) {
         return findCustomer(customerId)
-                .map(customer -> new CheckingAccount(customer, maintenanceFee, holderIds, authorizedSignerIds))
+                .map(
+                        customer ->
+                                new CheckingAccount(
+                                        customer, maintenanceFee, holderIds, authorizedSignerIds))
                 .flatMap(this::validatePersonalLimit)
                 .flatMap(bankAccountRepository::save);
     }
 
     @Override
-    public Single<FixedTermAccount> openFixedTermAccount(String customerId, int movementDayOfMonth) {
+    public Single<FixedTermAccount> openFixedTermAccount(
+            String customerId, int movementDayOfMonth) {
         return findCustomer(customerId)
                 .map(customer -> new FixedTermAccount(customer, movementDayOfMonth))
                 .flatMap(bankAccountRepository::save);
     }
 
     private Single<Customer> findCustomer(String customerId) {
-        return customerClient.findById(customerId)
+        return customerClient
+                .findById(customerId)
                 .switchIfEmpty(Single.error(() -> new NotFoundException("El cliente no existe")));
     }
 
@@ -57,10 +71,14 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
         if (account.getCustomer().type() != CustomerType.PERSONAL) {
             return Single.just(account);
         }
-        return bankAccountRepository.findByCustomerId(account.getCustomer().id())
+        return bankAccountRepository
+                .findByCustomerId(account.getCustomer().id())
                 .any(existing -> existing.getClass() == account.getClass())
-                .flatMap(alreadyHasSameType -> alreadyHasSameType
-                        ? Single.error(new BusinessRuleException("Un cliente personal solo puede tener una cuenta de este tipo"))
-                        : Single.just(account));
+                .flatMap(
+                        alreadyHasSameType ->
+                                alreadyHasSameType
+                                        ? Single.error(
+                                                new BusinessRuleException(PERSONAL_ACCOUNT_LIMIT))
+                                        : Single.just(account));
     }
 }

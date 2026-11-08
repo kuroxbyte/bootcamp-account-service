@@ -31,11 +31,13 @@ public class BankAccountPersistenceAdapter implements BankAccountRepository {
 
     @Override
     public <T extends BankAccount> Single<T> save(T account) {
-        return Single.fromPublisher(mongoRepository.save(BankAccountPersistenceMapper.toDocument(account)))
-                .map(saved -> {
-                    account.setId(saved.getId());
-                    log.debug("Account saved accountId={}", saved.getId());
-                    return account;
-                });
+        return Single.fromPublisher(
+                        mongoRepository.save(BankAccountPersistenceMapper.toDocument(account)))
+                .map(
+                        saved -> {
+                            account.setId(saved.getId());
+                            log.debug("Account saved accountId={}", saved.getId());
+                            return account;
+                        });
     }
 }

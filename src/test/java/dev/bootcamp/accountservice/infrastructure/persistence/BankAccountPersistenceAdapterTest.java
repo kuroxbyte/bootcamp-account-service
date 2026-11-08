@@ -26,18 +26,14 @@ import org.testcontainers.mongodb.MongoDBContainer;
 @Import(BankAccountPersistenceAdapter.class)
 class BankAccountPersistenceAdapterTest {
 
-    @Container
-    @ServiceConnection
-    static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
+    @Container @ServiceConnection static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
 
     private static final Customer PERSONAL = new Customer("c1", CustomerType.PERSONAL);
     private static final Customer BUSINESS = new Customer("c2", CustomerType.BUSINESS);
 
-    @Autowired
-    private BankAccountPersistenceAdapter adapter;
+    @Autowired private BankAccountPersistenceAdapter adapter;
 
-    @Autowired
-    private BankAccountMongoRepository mongoRepository;
+    @Autowired private BankAccountMongoRepository mongoRepository;
 
     @BeforeEach
     void cleanCollection() {
@@ -57,9 +53,14 @@ class BankAccountPersistenceAdapterTest {
 
     @Test
     void savesCheckingAccountWithHoldersSignersAndFee() {
-        CheckingAccount saved = adapter.save(
-                new CheckingAccount(BUSINESS, new BigDecimal("15.50"), List.of("h1", "h2"), List.of("s1")))
-                .blockingGet();
+        CheckingAccount saved =
+                adapter.save(
+                                new CheckingAccount(
+                                        BUSINESS,
+                                        new BigDecimal("15.50"),
+                                        List.of("h1", "h2"),
+                                        List.of("s1")))
+                        .blockingGet();
 
         CheckingAccount found = (CheckingAccount) adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getMaintenanceFee()).isEqualByComparingTo("15.50");
@@ -79,14 +80,17 @@ class BankAccountPersistenceAdapterTest {
     void findsAccountsByCustomer() {
         adapter.save(new SavingsAccount(PERSONAL, 5)).blockingGet();
         adapter.save(new FixedTermAccount(PERSONAL, 10)).blockingGet();
-        adapter.save(new CheckingAccount(BUSINESS, BigDecimal.TEN, List.of("h1"), List.of())).blockingGet();
+        adapter.save(new CheckingAccount(BUSINESS, BigDecimal.TEN, List.of("h1"), List.of()))
+                .blockingGet();
 
         adapter.findByCustomerId("c1").test().awaitDone(5, TimeUnit.SECONDS).assertValueCount(2);
     }
 
     @Test
     void returnsEmptyWhenAccountDoesNotExist() {
-        adapter.findById("000000000000000000000000").test().awaitDone(5, TimeUnit.SECONDS)
+        adapter.findById("000000000000000000000000")
+                .test()
+                .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoValues();
     }

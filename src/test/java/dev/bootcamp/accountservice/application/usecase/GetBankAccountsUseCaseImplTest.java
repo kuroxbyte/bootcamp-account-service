@@ -21,17 +21,16 @@ class GetBankAccountsUseCaseImplTest {
 
     private static final Customer PERSONAL = new Customer("1", CustomerType.PERSONAL);
 
-    @Mock
-    private BankAccountRepository bankAccountRepository;
+    @Mock private BankAccountRepository bankAccountRepository;
 
-    @InjectMocks
-    private GetBankAccountsUseCaseImpl useCase;
+    @InjectMocks private GetBankAccountsUseCaseImpl useCase;
 
     @Test
     void listsAccountsOfCustomer() {
         SavingsAccount savings = new SavingsAccount(PERSONAL, 5);
         FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, 15);
-        when(bankAccountRepository.findByCustomerId("1")).thenReturn(Flowable.just(savings, fixedTerm));
+        when(bankAccountRepository.findByCustomerId("1"))
+                .thenReturn(Flowable.just(savings, fixedTerm));
 
         useCase.findByCustomerId("1").test().assertValues(savings, fixedTerm);
     }
