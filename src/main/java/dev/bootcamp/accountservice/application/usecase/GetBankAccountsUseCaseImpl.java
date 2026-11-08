@@ -6,9 +6,11 @@ import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
+/** Implementación de {@link GetBankAccountsUseCase}. */
 public class GetBankAccountsUseCaseImpl implements GetBankAccountsUseCase {
     private final BankAccountRepository bankAccountRepository;
 
+    /** Crea el caso de uso con los adaptadores de sus puertos. */
     public GetBankAccountsUseCaseImpl(BankAccountRepository bankAccountRepository) {
         this.bankAccountRepository = bankAccountRepository;
     }
@@ -20,7 +22,8 @@ public class GetBankAccountsUseCaseImpl implements GetBankAccountsUseCase {
 
     @Override
     public Single<BankAccount> findById(String accountId) {
-        return bankAccountRepository.findById(accountId)
+        return bankAccountRepository
+                .findById(accountId)
                 .switchIfEmpty(Single.error(() -> new NotFoundException("La cuenta no existe")));
     }
 }

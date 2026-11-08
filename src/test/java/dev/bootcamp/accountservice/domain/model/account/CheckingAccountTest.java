@@ -20,19 +20,24 @@ class CheckingAccountTest {
     void requiresMaintenanceFee() {
         assertThatThrownBy(() -> new CheckingAccount(personal, null, List.of(), List.of()))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThatThrownBy(() -> new CheckingAccount(personal, BigDecimal.ZERO, List.of(), List.of()))
+        assertThatThrownBy(
+                        () -> new CheckingAccount(personal, BigDecimal.ZERO, List.of(), List.of()))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void allowsBusinessCustomer() {
-        assertThatCode(() -> new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of()))
+        assertThatCode(
+                        () ->
+                                new CheckingAccount(
+                                        business, BigDecimal.TEN, List.of("10"), List.of()))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void businessAccountRequiresAtLeastOneHolder() {
-        assertThatThrownBy(() -> new CheckingAccount(business, BigDecimal.TEN, List.of(), List.of()))
+        assertThatThrownBy(
+                        () -> new CheckingAccount(business, BigDecimal.TEN, List.of(), List.of()))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(() -> new CheckingAccount(business, BigDecimal.TEN, null, List.of()))
                 .isInstanceOf(BusinessRuleException.class);
@@ -40,15 +45,18 @@ class CheckingAccountTest {
 
     @Test
     void businessAccountAllowsMultipleHolders() {
-        CheckingAccount account = new CheckingAccount(business, BigDecimal.TEN, List.of("10", "11"), List.of());
+        CheckingAccount account =
+                new CheckingAccount(business, BigDecimal.TEN, List.of("10", "11"), List.of());
 
         assertThat(account.getHolderIds()).containsExactly("10", "11");
     }
 
     @Test
     void businessAccountAllowsZeroOrMoreAuthorizedSigners() {
-        CheckingAccount withoutSigners = new CheckingAccount(business, BigDecimal.TEN, List.of("10"), null);
-        CheckingAccount withSigners = new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of("20", "21"));
+        CheckingAccount withoutSigners =
+                new CheckingAccount(business, BigDecimal.TEN, List.of("10"), null);
+        CheckingAccount withSigners =
+                new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of("20", "21"));
 
         assertThat(withoutSigners.getAuthorizedSignerIds()).isEmpty();
         assertThat(withSigners.getAuthorizedSignerIds()).containsExactly("20", "21");

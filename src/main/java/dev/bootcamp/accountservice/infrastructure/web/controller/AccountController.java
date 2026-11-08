@@ -19,6 +19,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/** Endpoints de cuentas bancarias definidos en el contrato OpenAPI. */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -28,52 +29,75 @@ public class AccountController implements AccountsApi {
     private final GetBankAccountsUseCase getBankAccountsUseCase;
 
     @Override
-    public Mono<ResponseEntity<Flux<AccountResponseDto>>> listAccounts(String xCustomerId, ServerWebExchange exchange) {
-        log.debug("Listing accounts customerId={}", xCustomerId);
-        Flux<AccountResponseDto> accounts = Flux.from(getBankAccountsUseCase.findByCustomerId(xCustomerId))
-                .map(AccountWebMapper::toResponse);
+    public Mono<ResponseEntity<Flux<AccountResponseDto>>> listAccounts(
+            String customerId, ServerWebExchange exchange) {
+        log.debug("Listing accounts customerId={}", customerId);
+        Flux<AccountResponseDto> accounts =
+                Flux.from(getBankAccountsUseCase.findByCustomerId(customerId))
+                        .map(AccountWebMapper::toResponse);
         return Mono.just(ResponseEntity.ok(accounts));
     }
 
     @Override
-    public Mono<ResponseEntity<AccountResponseDto>> getAccountById(String accountId, ServerWebExchange exchange) {
+    public Mono<ResponseEntity<AccountResponseDto>> getAccountById(
+            String accountId, ServerWebExchange exchange) {
         log.debug("Fetching account accountId={}", accountId);
         return Mono.from(getBankAccountsUseCase.findById(accountId).toFlowable())
                 .map(account -> ResponseEntity.ok(AccountWebMapper.toResponse(account)));
     }
 
     @Override
-    public Mono<ResponseEntity<AccountResponseDto>> openSavingsAccount(String xCustomerId,
-                                                                       Mono<SavingsAccountRequestDto> savingsAccountRequestDto,
-                                                                       ServerWebExchange exchange) {
-        return savingsAccountRequestDto
-                .flatMap(request -> created(createBankAccountUseCase
-                        .openSavingsAccount(xCustomerId, request.getMaxMonthlyMovements())));
+    public Mono<ResponseEntity<AccountResponseDto>> openSavingsAccount(
+            String customerId,
+            Mono<SavingsAccountRequestDto> savingsAccountRequestDto,
+            ServerWebExchange exchange) {
+        return savingsAccountRequestDto.flatMap(
+                request ->
+                        created(
+                                createBankAccountUseCase.openSavingsAccount(
+                                        customerId, request.getMaxMonthlyMovements())));
     }
 
     @Override
-    public Mono<ResponseEntity<AccountResponseDto>> openCheckingAccount(String xCustomerId,
-                                                                        Mono<CheckingAccountRequestDto> checkingAccountRequestDto,
-                                                                        ServerWebExchange exchange) {
-        return checkingAccountRequestDto
-                .flatMap(request -> created(createBankAccountUseCase.openCheckingAccount(
-                        xCustomerId, request.getMaintenanceFee(),
-                        request.getHolderIds(), request.getAuthorizedSignerIds())));
+    public Mono<ResponseEntity<AccountResponseDto>> openCheckingAccount(
+            String customerId,
+            Mono<CheckingAccountRequestDto> checkingAccountRequestDto,
+            ServerWebExchange exchange) {
+        return checkingAccountRequestDto.flatMap(
+                request ->
+                        created(
+                                createBankAccountUseCase.openCheckingAccount(
+                                        customerId,
+                                        request.getMaintenanceFee(),
+                                        request.getHolderIds(),
+                                        request.getAuthorizedSignerIds())));
     }
 
     @Override
-    public Mono<ResponseEntity<AccountResponseDto>> openFixedTermAccount(String xCustomerId,
-                                                                         Mono<FixedTermAccountRequestDto> fixedTermAccountRequestDto,
-                                                                         ServerWebExchange exchange) {
-        return fixedTermAccountRequestDto
-                .flatMap(request -> created(createBankAccountUseCase
-                        .openFixedTermAccount(xCustomerId, request.getMovementDayOfMonth())));
+    public Mono<ResponseEntity<AccountResponseDto>> openFixedTermAccount(
+            String customerId,
+            Mono<FixedTermAccountRequestDto> fixedTermAccountRequestDto,
+            ServerWebExchange exchange) {
+        return fixedTermAccountRequestDto.flatMap(
+                request ->
+                        created(
+                                createBankAccountUseCase.openFixedTermAccount(
+                                        customerId, request.getMovementDayOfMonth())));
     }
 
-    private static Mono<ResponseEntity<AccountResponseDto>> created(Single<? extends BankAccount> account) {
+    private static Mono<ResponseEntity<AccountResponseDto>> created(
+            Single<? extends BankAccount> account) {
         return Mono.from(account.toFlowable())
-                .doOnNext(saved -> log.info("Account opened accountId={} customerId={} type={}",
-                        saved.getId(), saved.getCustomer().id(), saved.getClass().getSimpleName()))
-                .map(saved -> ResponseEntity.status(HttpStatus.CREATED).body(AccountWebMapper.toResponse(saved)));
+                .doOnNext(
+                        saved ->
+                                log.info(
+                                        "Account opened accountId={} customerId={} type={}",
+                                        saved.getId(),
+                                        saved.getCustomer().id(),
+                                        saved.getClass().getSimpleName()))
+                .map(
+                        saved ->
+                                ResponseEntity.status(HttpStatus.CREATED)
+                                        .body(AccountWebMapper.toResponse(saved)));
     }
 }
