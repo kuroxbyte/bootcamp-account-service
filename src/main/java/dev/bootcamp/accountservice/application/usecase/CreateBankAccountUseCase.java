@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import io.reactivex.rxjava3.core.Single;
+
 import java.math.BigDecimal;
 import java.util.List;
 

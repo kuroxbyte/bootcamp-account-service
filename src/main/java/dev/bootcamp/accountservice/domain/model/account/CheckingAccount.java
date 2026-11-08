@@ -3,9 +3,10 @@ package dev.bootcamp.accountservice.domain.model.account;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
+import lombok.Getter;
+
 import java.math.BigDecimal;
 import java.util.List;
-import lombok.Getter;
 
 /**
  * Cuenta corriente: con comisión de mantenimiento, sin límite de movimientos mensuales. Si es

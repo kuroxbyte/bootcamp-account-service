@@ -12,7 +12,9 @@ public abstract class BankAccount {
     @Setter private String id;
     private final Customer customer;
 
-    /** Crea la cuenta para el cliente indicado. */
+    /**
+     * Crea la cuenta para el cliente indicado.
+     */
     protected BankAccount(Customer customer) {
         this.customer = customer;
     }

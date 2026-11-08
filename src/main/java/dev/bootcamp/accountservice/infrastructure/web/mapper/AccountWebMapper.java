@@ -7,12 +7,16 @@ import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.infrastructure.web.dto.AccountResponseDto;
 import dev.bootcamp.accountservice.infrastructure.web.dto.AccountTypeDto;
 
-/** Conversión entre el dominio y los DTOs del contrato OpenAPI. */
+/**
+ * Conversión entre el dominio y los DTOs del contrato OpenAPI.
+ */
 public final class AccountWebMapper {
 
     private AccountWebMapper() {}
 
-    /** Convierte una cuenta en su respuesta; solo se llenan los campos propios de su tipo. */
+    /**
+     * Convierte una cuenta en su respuesta; solo se llenan los campos propios de su tipo.
+     */
     public static AccountResponseDto toResponse(BankAccount account) {
         AccountResponseDto response =
                 new AccountResponseDto()

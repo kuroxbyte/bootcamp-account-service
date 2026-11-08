@@ -11,10 +11,13 @@ import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Single;
+
 import java.math.BigDecimal;
 import java.util.List;
 
-/** Implementación de {@link CreateBankAccountUseCase}. */
+/**
+ * Implementación de {@link CreateBankAccountUseCase}.
+ */
 public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private static final String PERSONAL_ACCOUNT_LIMIT =
             "Un cliente personal solo puede tener una cuenta de este tipo";
@@ -22,9 +25,12 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private final BankAccountRepository bankAccountRepository;
     private final CustomerClient customerClient;
 
-    /** Crea el caso de uso con los adaptadores de sus puertos. */
+    /**
+     * Crea el caso de uso con los adaptadores de sus puertos.
+     */
     public CreateBankAccountUseCaseImpl(
-            BankAccountRepository bankAccountRepository, CustomerClient customerClient) {
+            BankAccountRepository bankAccountRepository,
+            CustomerClient customerClient) {
         this.bankAccountRepository = bankAccountRepository;
         this.customerClient = customerClient;
     }
@@ -54,7 +60,8 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
 
     @Override
     public Single<FixedTermAccount> openFixedTermAccount(
-            String customerId, int movementDayOfMonth) {
+            String customerId,
+            int movementDayOfMonth) {
         return findCustomer(customerId)
                 .map(customer -> new FixedTermAccount(customer, movementDayOfMonth))
                 .flatMap(bankAccountRepository::save);

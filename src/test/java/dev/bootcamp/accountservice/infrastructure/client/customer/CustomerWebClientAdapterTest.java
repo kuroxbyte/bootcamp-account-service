@@ -1,15 +1,16 @@
 package dev.bootcamp.accountservice.infrastructure.client.customer;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import dev.bootcamp.accountservice.infrastructure.client.StubWebClient;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class CustomerWebClientAdapterTest {
 

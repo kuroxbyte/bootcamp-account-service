@@ -19,7 +19,9 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/** Endpoints de cuentas bancarias definidos en el contrato OpenAPI. */
+/**
+ * Endpoints de cuentas bancarias definidos en el contrato OpenAPI.
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +32,8 @@ public class AccountController implements AccountsApi {
 
     @Override
     public Mono<ResponseEntity<Flux<AccountResponseDto>>> listAccounts(
-            String customerId, ServerWebExchange exchange) {
+            String customerId,
+            ServerWebExchange exchange) {
         log.debug("Listing accounts customerId={}", customerId);
         Flux<AccountResponseDto> accounts =
                 Flux.from(getBankAccountsUseCase.findByCustomerId(customerId))
@@ -40,7 +43,8 @@ public class AccountController implements AccountsApi {
 
     @Override
     public Mono<ResponseEntity<AccountResponseDto>> getAccountById(
-            String accountId, ServerWebExchange exchange) {
+            String accountId,
+            ServerWebExchange exchange) {
         log.debug("Fetching account accountId={}", accountId);
         return Mono.from(getBankAccountsUseCase.findById(accountId).toFlowable())
                 .map(account -> ResponseEntity.ok(AccountWebMapper.toResponse(account)));
