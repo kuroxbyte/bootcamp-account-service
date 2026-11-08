@@ -1,7 +1,5 @@
 package dev.bootcamp.accountservice.infrastructure.persistence;
 
-import java.math.BigDecimal;
-import java.util.List;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.annotation.Id;
@@ -9,6 +7,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Cuenta bancaria tal como se guarda en la colección {@code accounts}. Una sola colección para los
@@ -27,7 +28,9 @@ public class BankAccountDocument {
      */
     private final String customerType;
 
-    /** SAVINGS, CHECKING o FIXED_TERM. */
+    /**
+     * SAVINGS, CHECKING o FIXED_TERM.
+     */
     private final String type;
 
     private final Integer maxMonthlyMovements;

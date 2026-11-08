@@ -16,14 +16,19 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class UseCaseConfig {
 
-    /** Registra el caso de uso {@link CreateBankAccountUseCase}. */
+    /**
+     * Registra el caso de uso {@link CreateBankAccountUseCase}.
+     */
     @Bean
     public CreateBankAccountUseCase createBankAccountUseCase(
-            BankAccountRepository bankAccountRepository, CustomerClient customerClient) {
+            BankAccountRepository bankAccountRepository,
+            CustomerClient customerClient) {
         return new CreateBankAccountUseCaseImpl(bankAccountRepository, customerClient);
     }
 
-    /** Registra el caso de uso {@link GetBankAccountsUseCase}. */
+    /**
+     * Registra el caso de uso {@link GetBankAccountsUseCase}.
+     */
     @Bean
     public GetBankAccountsUseCase getBankAccountsUseCase(
             BankAccountRepository bankAccountRepository) {

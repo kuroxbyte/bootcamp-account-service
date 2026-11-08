@@ -7,7 +7,9 @@ import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 
-/** Conversión entre el dominio y el documento de MongoDB. */
+/**
+ * Conversión entre el dominio y el documento de MongoDB.
+ */
 final class BankAccountPersistenceMapper {
     static final String SAVINGS = "SAVINGS";
     static final String CHECKING = "CHECKING";
