@@ -21,7 +21,7 @@ class CheckingAccountTest {
     void requiresMaintenanceFee() {
         assertThatThrownBy(
                 () -> new CheckingAccount(personal,
-                OpeningAmount.ZERO,
+                TestOpenings.NONE,
                 null,
                 List.of(),
                 List.of()))
@@ -29,7 +29,7 @@ class CheckingAccountTest {
         assertThatThrownBy(
                         () -> new CheckingAccount(
                                 personal,
-                                OpeningAmount.ZERO,
+                                TestOpenings.NONE,
                                 BigDecimal.ZERO,
                                 List.of(),
                                 List.of()))
@@ -42,7 +42,7 @@ class CheckingAccountTest {
                         () ->
                                 new CheckingAccount(
                                         business,
-                                        OpeningAmount.ZERO,
+                                        TestOpenings.NONE,
                                         BigDecimal.TEN,
                                         List.of("10"),
                                         List.of()))
@@ -54,14 +54,14 @@ class CheckingAccountTest {
         assertThatThrownBy(
                         () -> new CheckingAccount(
                                 business,
-                                OpeningAmount.ZERO,
+                                TestOpenings.NONE,
                                 BigDecimal.TEN,
                                 List.of(),
                                 List.of()))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(
                 () -> new CheckingAccount(business,
-                OpeningAmount.ZERO,
+                TestOpenings.NONE,
                 BigDecimal.TEN,
                 null,
                 List.of()))
@@ -73,7 +73,7 @@ class CheckingAccountTest {
         CheckingAccount account =
                 new CheckingAccount(
                         business,
-                        OpeningAmount.ZERO,
+                        TestOpenings.NONE,
                         BigDecimal.TEN,
                         List.of("10", "11"),
                         List.of());
@@ -86,14 +86,14 @@ class CheckingAccountTest {
         CheckingAccount withoutSigners =
                 new CheckingAccount(
                         business,
-                        OpeningAmount.ZERO,
+                        TestOpenings.NONE,
                         BigDecimal.TEN,
                         List.of("10"),
                         null);
         CheckingAccount withSigners =
                 new CheckingAccount(
                         business,
-                        OpeningAmount.ZERO,
+                        TestOpenings.NONE,
                         BigDecimal.TEN,
                         List.of("10"),
                         List.of("20", "21"));

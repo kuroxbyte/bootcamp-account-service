@@ -15,11 +15,6 @@ import java.math.BigDecimal;
 public record OpeningAmount(BigDecimal minimum, BigDecimal amount) {
 
     /**
-     * Apertura sin monto; se usa para cuentas guardadas antes de existir esta regla.
-     */
-    public static final OpeningAmount ZERO = new OpeningAmount(BigDecimal.ZERO, BigDecimal.ZERO);
-
-    /**
      * Valida el mínimo y el monto de apertura.
      *
      * @throws BusinessRuleException si alguno es negativo o falta, o si el monto es menor que el

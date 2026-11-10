@@ -5,6 +5,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +46,7 @@ class BankAccountPersistenceAdapterTest {
     @Test
     void savesSavingsAccountAndAssignsId() {
         SavingsAccount saved = adapter.save(
-                new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)).blockingGet();
+                new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)).blockingGet();
 
         assertThat(saved.getId()).isNotBlank();
         BankAccount found = adapter.findById(saved.getId()).blockingGet();
@@ -59,7 +60,7 @@ class BankAccountPersistenceAdapterTest {
         CheckingAccount saved =
                 adapter.save(
                                 new CheckingAccount(
-                                        BUSINESS, OpeningAmount.ZERO,
+                                        BUSINESS, TestOpenings.NONE,
                                         new BigDecimal("15.50"),
                                         List.of("h1", "h2"),
                                         List.of("s1")))
@@ -74,7 +75,7 @@ class BankAccountPersistenceAdapterTest {
     @Test
     void savesFixedTermAccount() {
         FixedTermAccount saved = adapter.save(
-                new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 15)).blockingGet();
+                new FixedTermAccount(PERSONAL, TestOpenings.NONE, 15)).blockingGet();
 
         FixedTermAccount found = (FixedTermAccount) adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getMovementDayOfMonth()).isEqualTo(15);
@@ -82,12 +83,12 @@ class BankAccountPersistenceAdapterTest {
 
     @Test
     void findsAccountsByCustomer() {
-        adapter.save(new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)).blockingGet();
-        adapter.save(new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 10)).blockingGet();
+        adapter.save(new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)).blockingGet();
+        adapter.save(new FixedTermAccount(PERSONAL, TestOpenings.NONE, 10)).blockingGet();
         adapter.save(
                 new CheckingAccount(
                         BUSINESS,
-                        OpeningAmount.ZERO,
+                        TestOpenings.NONE,
                         BigDecimal.TEN,
                         List.of("h1"),
                         List.of()))
@@ -113,18 +114,5 @@ class BankAccountPersistenceAdapterTest {
         BankAccount found = adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getOpening().minimum()).isEqualByComparingTo("50");
         assertThat(found.getOpening().amount()).isEqualByComparingTo("120.75");
-    }
-
-    @Test
-    void readsAccountsSavedWithoutOpeningAmountAsZero() {
-        BankAccountDocument legacy = BankAccountDocument.builder()
-                .customerId("c1")
-                .customerType("PERSONAL")
-                .type("SAVINGS")
-                .maxMonthlyMovements(5)
-                .build();
-        String id = mongoRepository.save(legacy).block().getId();
-
-        assertThat(adapter.findById(id).blockingGet().getOpening()).isEqualTo(OpeningAmount.ZERO);
     }
 }

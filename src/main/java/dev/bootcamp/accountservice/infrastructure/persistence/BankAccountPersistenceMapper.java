@@ -51,7 +51,9 @@ final class BankAccountPersistenceMapper {
         Customer customer = new Customer(
                 document.getCustomerId(),
                 CustomerType.valueOf(document.getCustomerType()));
-        OpeningAmount opening = opening(document);
+        OpeningAmount opening = new OpeningAmount(
+                document.getMinimumOpeningAmount(),
+                document.getOpeningAmount());
         BankAccount account = switch (document.getType()) {
             case SAVINGS -> new SavingsAccount(
                     customer,
@@ -74,13 +76,4 @@ final class BankAccountPersistenceMapper {
         return account;
     }
 
-    /**
-     * Cuentas guardadas antes de existir el monto de apertura se leen con mínimo y monto 0.
-     */
-    private static OpeningAmount opening(BankAccountDocument document) {
-        if (document.getMinimumOpeningAmount() == null || document.getOpeningAmount() == null) {
-            return OpeningAmount.ZERO;
-        }
-        return new OpeningAmount(document.getMinimumOpeningAmount(), document.getOpeningAmount());
-    }
 }

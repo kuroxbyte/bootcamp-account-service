@@ -16,13 +16,13 @@ class SavingsAccountTest {
     void createsWithPositiveMovementLimit() {
         assertThatCode(
                 () -> new SavingsAccount(personal,
-                OpeningAmount.ZERO,
+                TestOpenings.NONE,
                 5)).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsNonPositiveMovementLimit() {
-        assertThatThrownBy(() -> new SavingsAccount(personal, OpeningAmount.ZERO, 0))
+        assertThatThrownBy(() -> new SavingsAccount(personal, TestOpenings.NONE, 0))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
@@ -30,7 +30,7 @@ class SavingsAccountTest {
     void rejectsBusinessCustomer() {
         Customer business = new Customer("2", CustomerType.BUSINESS);
 
-        assertThatThrownBy(() -> new SavingsAccount(business, OpeningAmount.ZERO, 5))
+        assertThatThrownBy(() -> new SavingsAccount(business, TestOpenings.NONE, 5))
                 .isInstanceOf(BusinessRuleException.class);
     }
 }

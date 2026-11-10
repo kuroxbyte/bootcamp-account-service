@@ -8,6 +8,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Flowable;
@@ -84,7 +85,7 @@ class CreateBankAccountUseCaseImplTest {
     void personalCustomerCannotOpenSecondSavingsAccount() {
         when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
         when(bankAccountRepository.findByCustomerId("1"))
-                .thenReturn(Flowable.just(new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)));
+                .thenReturn(Flowable.just(new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)));
 
         useCase.openSavingsAccount(
                 "1",
@@ -101,7 +102,7 @@ class CreateBankAccountUseCaseImplTest {
                         Flowable.just(
                                 new CheckingAccount(
                                         PERSONAL,
-                                        OpeningAmount.ZERO,
+                                        TestOpenings.NONE,
                                         BigDecimal.TEN,
                                         List.of(),
                                         List.of())));
@@ -116,7 +117,7 @@ class CreateBankAccountUseCaseImplTest {
     void personalCustomerCanHaveOneSavingsAndOneCheckingAccount() {
         when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
         when(bankAccountRepository.findByCustomerId("1"))
-                .thenReturn(Flowable.just(new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)));
+                .thenReturn(Flowable.just(new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)));
         when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of(), BigDecimal.ZERO)
@@ -211,7 +212,8 @@ class CreateBankAccountUseCaseImplTest {
         when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
 
         useCase.openSavingsAccount("1", 5, BigDecimal.ZERO).test()
-                .assertValue(account -> account.getOpening().equals(OpeningAmount.ZERO));
+                .assertValue(account -> account.getOpening()
+                        .equals(new OpeningAmount(BigDecimal.ZERO, BigDecimal.ZERO)));
     }
 
     @Test
