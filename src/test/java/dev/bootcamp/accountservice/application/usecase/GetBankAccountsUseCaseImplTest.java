@@ -5,6 +5,7 @@ import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Flowable;
@@ -28,8 +29,8 @@ class GetBankAccountsUseCaseImplTest {
 
     @Test
     void listsAccountsOfCustomer() {
-        SavingsAccount savings = new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5);
-        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 15);
+        SavingsAccount savings = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
+        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, TestOpenings.NONE, 15);
         when(bankAccountRepository.findByCustomerId("1"))
                 .thenReturn(Flowable.just(savings, fixedTerm));
 
@@ -38,7 +39,7 @@ class GetBankAccountsUseCaseImplTest {
 
     @Test
     void returnsExistingAccount() {
-        SavingsAccount savings = new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5);
+        SavingsAccount savings = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
         when(bankAccountRepository.findById("10")).thenReturn(Maybe.just(savings));
 
         useCase.findById("10").test().assertValue(savings);

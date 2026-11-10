@@ -8,6 +8,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
@@ -43,7 +44,7 @@ class AccountControllerTest {
     @MockitoBean private GetBankAccountsUseCase getBankAccountsUseCase;
 
     private static SavingsAccount savings() {
-        SavingsAccount account = new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5);
+        SavingsAccount account = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
         account.setId("10");
         return account;
     }
@@ -82,7 +83,7 @@ class AccountControllerTest {
         CheckingAccount checking =
                 new CheckingAccount(
                         BUSINESS,
-                        OpeningAmount.ZERO,
+                        TestOpenings.NONE,
                         BigDecimal.TEN,
                         List.of("h1"),
                         List.of("s1"));
@@ -113,7 +114,7 @@ class AccountControllerTest {
 
     @Test
     void opensFixedTermAccount() {
-        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 15);
+        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, TestOpenings.NONE, 15);
         fixedTerm.setId("12");
         when(createBankAccountUseCase.openFixedTermAccount("1", 15, BigDecimal.ZERO))
                 .thenReturn(Single.just(fixedTerm));
