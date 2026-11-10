@@ -182,6 +182,34 @@
                             </configOptions>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>generate-credit-client-models</id>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/resources/openapi/clients/credit-api.yaml</inputSpec>
+                            <generatorName>spring</generatorName>
+                            <generateApis>false</generateApis>
+                            <modelPackage>dev.bootcamp.accountservice.infrastructure.client.credit.dto</modelPackage>
+                            <modelsToGenerate>CreditCardResponse</modelsToGenerate>
+                            <generateSupportingFiles>false</generateSupportingFiles>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <configOptions>
+                                <reactive>true</reactive>
+                                <useSpringBoot3>true</useSpringBoot3>
+                                <openApiNullable>false</openApiNullable>
+                                <documentationProvider>none</documentationProvider>
+                                <annotationLibrary>none</annotationLibrary>
+                                <useBeanValidation>true</useBeanValidation>
+                                <dateLibrary>java8</dateLibrary>
+                            </configOptions>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

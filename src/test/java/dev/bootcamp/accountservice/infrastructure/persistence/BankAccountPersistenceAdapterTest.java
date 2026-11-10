@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -20,6 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.mongodb.MongoDBContainer;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -121,5 +123,29 @@ class BankAccountPersistenceAdapterTest {
         BankAccount found = adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getOpening().minimum()).isEqualByComparingTo("50");
         assertThat(found.getOpening().amount()).isEqualByComparingTo("120.75");
+    }
+
+    @Test
+    void savesVipSavingsAccountWithMinimumDailyAverage() {
+        Customer vip = new Customer("c3", CustomerType.PERSONAL, CustomerProfile.VIP);
+        VipSavingsAccount saved = adapter.save(
+                new VipSavingsAccount(vip, TestOpenings.NONE, 5, new BigDecimal("500")))
+                .blockingGet();
+
+        BankAccount found = adapter.findById(saved.getId()).blockingGet();
+        assertThat(found).isInstanceOf(VipSavingsAccount.class);
+        assertThat(((VipSavingsAccount) found).getMinimumDailyAverage())
+                .isEqualByComparingTo("500");
+        assertThat(found.getCustomer()).isEqualTo(vip);
+    }
+
+    @Test
+    void keepsOpeningDate() {
+        SavingsAccount account = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
+        account.setOpenedAt(LocalDate.of(2026, 11, 15));
+        SavingsAccount saved = adapter.save(account).blockingGet();
+
+        BankAccount found = adapter.findById(saved.getId()).blockingGet();
+        assertThat(found.getOpenedAt()).isEqualTo(LocalDate.of(2026, 11, 15));
     }
 }

@@ -76,6 +76,13 @@ public final class StubWebClient {
     }
 
     /**
+     * Valor del header indicado en la última petición recibida.
+     */
+    public String lastHeader(String name) {
+        return lastRequest.get().headers().getFirst(name);
+    }
+
+    /**
      * Cantidad de peticiones que llegaron al stub.
      */
     public int requestCount() {

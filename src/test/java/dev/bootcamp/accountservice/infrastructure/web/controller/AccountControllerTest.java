@@ -9,6 +9,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -23,6 +24,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -140,6 +142,62 @@ class AccountControllerTest {
                 .isEqualTo("FIXED_TERM")
                 .jsonPath("$.movementDayOfMonth")
                 .isEqualTo(15);
+    }
+
+    @Test
+    void opensVipSavingsAccountWithMinimumDailyAverageAndOpeningDate() {
+        Customer vip = new Customer("3", CustomerType.PERSONAL, CustomerProfile.VIP);
+        VipSavingsAccount account =
+                new VipSavingsAccount(vip, TestOpenings.NONE, 5, new BigDecimal("500"));
+        account.setId("13");
+        account.setOpenedAt(LocalDate.of(2026, 11, 15));
+        when(createBankAccountUseCase.openSavingsAccount("3", 5, BigDecimal.ZERO))
+                .thenReturn(Single.just(account));
+
+        webTestClient
+                .post()
+                .uri("/api/v1/accounts/savings")
+                .header("X-Customer-Id", "3")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.type")
+                .isEqualTo("SAVINGS")
+                .jsonPath("$.minimumDailyAverage")
+                .isEqualTo(500)
+                .jsonPath("$.openedAt")
+                .isEqualTo("2026-11-15");
+    }
+
+    @Test
+    void opensPymeCheckingAccountWithoutMaintenanceFee() {
+        Customer pyme = new Customer("4", CustomerType.BUSINESS, CustomerProfile.PYME);
+        CheckingAccount checking =
+                new CheckingAccount(pyme, TestOpenings.NONE, null, List.of("h1"), List.of());
+        checking.setId("14");
+        when(createBankAccountUseCase.openCheckingAccount(
+                        "4",
+                        null,
+                        List.of("h1"),
+                        List.of(),
+                        BigDecimal.ZERO))
+                .thenReturn(Single.just(checking));
+
+        webTestClient
+                .post()
+                .uri("/api/v1/accounts/checking")
+                .header("X-Customer-Id", "4")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"holderIds\":[\"h1\"],\"openingAmount\":0}")
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.maintenanceFee")
+                .isEqualTo(0);
     }
 
     @Test

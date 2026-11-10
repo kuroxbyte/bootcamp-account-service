@@ -4,6 +4,7 @@ import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.infrastructure.web.dto.AccountResponseDto;
 import dev.bootcamp.accountservice.infrastructure.web.dto.AccountTypeDto;
 
@@ -24,8 +25,14 @@ public final class AccountWebMapper {
                         .customerId(account.getCustomer().id())
                         .minimumOpeningAmount(account.getOpening().minimum())
                         .openingAmount(account.getOpening().amount())
+                        .openedAt(account.getOpenedAt())
                         .holderIds(null)
                         .authorizedSignerIds(null);
+        if (account instanceof VipSavingsAccount vipSavings) {
+            return response.type(AccountTypeDto.SAVINGS)
+                    .maxMonthlyMovements(vipSavings.getMaxMonthlyMovements())
+                    .minimumDailyAverage(vipSavings.getMinimumDailyAverage());
+        }
         if (account instanceof SavingsAccount savings) {
             return response.type(AccountTypeDto.SAVINGS)
                     .maxMonthlyMovements(savings.getMaxMonthlyMovements());
