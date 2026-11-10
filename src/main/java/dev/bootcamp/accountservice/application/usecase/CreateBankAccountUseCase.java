@@ -24,24 +24,29 @@ import java.util.List;
  *   <li>Cuenta empresarial: uno o más titulares y cero o más firmantes autorizados.
  *   <li>El monto de apertura debe ser al menos el mínimo de apertura del tipo de cuenta, que puede
  *       ser 0; es el saldo inicial de la cuenta.
+ *   <li>Cliente VIP: su cuenta de ahorro es VIP (exige un mínimo de promedio diario mensual) y
+ *       debe tener una tarjeta de crédito con el banco al abrirla.
+ *   <li>Cliente PYME: su cuenta corriente no tiene comisión de mantenimiento y debe tener una
+ *       tarjeta de crédito con el banco al abrirla.
+ *   <li>La fecha de apertura es la fecha actual.
  * </ul>
  *
  * <p>Es reactivo: no hace nada hasta que se suscribe al {@link Single}. Termina con error {@link
  * NotFoundException} si el cliente o el producto no existe (o no pertenece al cliente), y con error
  * {@link BusinessRuleException} si se incumple una regla de negocio; en ambos casos no se guarda
- * nada.
+ * nada. Si credit-service no está disponible, termina con el error del adaptador.
  */
 public interface CreateBankAccountUseCase {
 
     /**
-     * Abre una cuenta de ahorro.
+     * Abre una cuenta de ahorro; si el cliente es VIP, la cuenta es de ahorro VIP.
      *
      * @param customerId id del cliente en customer-service
      * @param maxMonthlyMovements límite máximo de movimientos mensuales
      * @param openingAmount monto de apertura
      * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link
-     *     BusinessRuleException} si es empresarial, es personal y ya tiene una cuenta de ahorro, o
-     *     el monto de apertura es menor que el mínimo
+     *     BusinessRuleException} si es empresarial, es personal y ya tiene una cuenta de ahorro,
+     *     es VIP y no tiene tarjeta de crédito, o el monto de apertura es menor que el mínimo
      */
     Single<SavingsAccount> openSavingsAccount(
             String customerId,
@@ -52,13 +57,14 @@ public interface CreateBankAccountUseCase {
      * Abre una cuenta corriente.
      *
      * @param customerId id del cliente en customer-service
-     * @param maintenanceFee comisión de mantenimiento
+     * @param maintenanceFee comisión de mantenimiento (omitir o 0 si el cliente es PYME)
      * @param holderIds titulares de la cuenta (obligatorio al menos uno si es empresarial)
      * @param authorizedSignerIds firmantes autorizados (puede estar vacío)
      * @param openingAmount monto de apertura
      * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link
      *     BusinessRuleException} si es personal y ya tiene una cuenta corriente, es empresarial y
-     *     no tiene titulares, o el monto de apertura es menor que el mínimo
+     *     no tiene titulares, es PYME y no tiene tarjeta de crédito o indica comisión, o el monto
+     *     de apertura es menor que el mínimo
      */
     Single<CheckingAccount> openCheckingAccount(
             String customerId,

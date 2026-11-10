@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -40,6 +41,12 @@ public class BankAccountDocument {
 
     private final Integer maxMonthlyMovements;
 
+    /**
+     * Solo en la cuenta de ahorro VIP.
+     */
+    @Field(targetType = FieldType.DECIMAL128)
+    private final BigDecimal minimumDailyAverage;
+
     @Field(targetType = FieldType.DECIMAL128)
     private final BigDecimal maintenanceFee;
 
@@ -52,4 +59,6 @@ public class BankAccountDocument {
 
     @Field(targetType = FieldType.DECIMAL128)
     private final BigDecimal openingAmount;
+
+    private final LocalDate openedAt;
 }

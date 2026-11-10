@@ -1,6 +1,7 @@
 package dev.bootcamp.accountservice.application.usecase;
 
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
+import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
@@ -9,6 +10,7 @@ import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -22,6 +24,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -42,10 +48,23 @@ class CreateBankAccountUseCaseImplTest {
             "2",
             CustomerType.BUSINESS,
             CustomerProfile.STANDARD);
+    private static final Customer VIP = new Customer(
+            "3",
+            CustomerType.PERSONAL,
+            CustomerProfile.VIP);
+    private static final Customer PYME = new Customer(
+            "4",
+            CustomerType.BUSINESS,
+            CustomerProfile.PYME);
+    private static final BigDecimal VIP_MINIMUM_DAILY_AVERAGE = new BigDecimal("500");
+    private static final Clock CLOCK =
+            Clock.fixed(Instant.parse("2026-11-15T10:00:00Z"), ZoneOffset.UTC);
 
     @Mock private BankAccountRepository bankAccountRepository;
 
     @Mock private CustomerClient customerClient;
+
+    @Mock private CreditCardClient creditCardClient;
 
     private CreateBankAccountUseCaseImpl useCase;
 
@@ -64,7 +83,10 @@ class CreateBankAccountUseCaseImplTest {
         return new CreateBankAccountUseCaseImpl(
                 bankAccountRepository,
                 customerClient,
-                new MinimumOpeningAmounts(savings, checking, fixedTerm));
+                creditCardClient,
+                new MinimumOpeningAmounts(savings, checking, fixedTerm),
+                VIP_MINIMUM_DAILY_AVERAGE,
+                CLOCK);
     }
 
     @Test
@@ -247,6 +269,105 @@ class CreateBankAccountUseCaseImplTest {
 
         useCase.openSavingsAccount("1", 5, new BigDecimal("49.99")).test()
                 .assertError(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void setsOpeningDateToToday() {
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        useCase.openFixedTermAccount("1", 10, BigDecimal.ZERO).test()
+                .assertValue(account -> account.getOpenedAt().equals(LocalDate.of(2026, 11, 15)));
+    }
+
+    @Test
+    void vipCustomerWithCreditCardOpensVipSavingsAccount() {
+        when(customerClient.findById("3")).thenReturn(Maybe.just(VIP));
+        when(creditCardClient.hasCreditCard("3")).thenReturn(Single.just(true));
+        when(bankAccountRepository.findByCustomerId("3")).thenReturn(Flowable.empty());
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        SavingsAccount account = useCase.openSavingsAccount("3", 5, BigDecimal.ZERO).blockingGet();
+
+        assertThat(account).isInstanceOf(VipSavingsAccount.class);
+        assertThat(((VipSavingsAccount) account).getMinimumDailyAverage())
+                .isEqualByComparingTo("500");
+    }
+
+    @Test
+    void vipCustomerWithoutCreditCardCannotOpenSavingsAccount() {
+        when(customerClient.findById("3")).thenReturn(Maybe.just(VIP));
+        when(creditCardClient.hasCreditCard("3")).thenReturn(Single.just(false));
+
+        useCase.openSavingsAccount("3", 5, BigDecimal.ZERO).test()
+                .assertError(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void vipCustomerCannotOpenSecondSavingsAccount() {
+        when(customerClient.findById("3")).thenReturn(Maybe.just(VIP));
+        when(creditCardClient.hasCreditCard("3")).thenReturn(Single.just(true));
+        when(bankAccountRepository.findByCustomerId("3"))
+                .thenReturn(Flowable.just(new VipSavingsAccount(
+                        VIP,
+                        TestOpenings.NONE,
+                        5,
+                        VIP_MINIMUM_DAILY_AVERAGE)));
+
+        useCase.openSavingsAccount("3", 5, BigDecimal.ZERO).test()
+                .assertError(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void vipCustomerOpensCheckingAccountWithoutCreditCard() {
+        when(customerClient.findById("3")).thenReturn(Maybe.just(VIP));
+        when(bankAccountRepository.findByCustomerId("3")).thenReturn(Flowable.empty());
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        useCase.openCheckingAccount("3", BigDecimal.TEN, List.of(), List.of(), BigDecimal.ZERO)
+                .test()
+                .assertComplete();
+        verify(creditCardClient, never()).hasCreditCard(any());
+    }
+
+    @Test
+    void pymeCustomerWithCreditCardOpensCheckingAccountWithoutFee() {
+        when(customerClient.findById("4")).thenReturn(Maybe.just(PYME));
+        when(creditCardClient.hasCreditCard("4")).thenReturn(Single.just(true));
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        CheckingAccount account = useCase.openCheckingAccount(
+                "4",
+                null,
+                List.of("10"),
+                List.of(),
+                BigDecimal.ZERO).blockingGet();
+
+        assertThat(account.getMaintenanceFee()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void pymeCustomerWithoutCreditCardCannotOpenCheckingAccount() {
+        when(customerClient.findById("4")).thenReturn(Maybe.just(PYME));
+        when(creditCardClient.hasCreditCard("4")).thenReturn(Single.just(false));
+
+        useCase.openCheckingAccount("4", null, List.of("10"), List.of(), BigDecimal.ZERO)
+                .test()
+                .assertError(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void pymeCustomerCannotOpenCheckingAccountWithMaintenanceFee() {
+        when(customerClient.findById("4")).thenReturn(Maybe.just(PYME));
+
+        useCase.openCheckingAccount("4", BigDecimal.TEN, List.of("10"), List.of(), BigDecimal.ZERO)
+                .test()
+                .assertError(BusinessRuleException.class);
+        verify(creditCardClient, never()).hasCreditCard(any());
         verify(bankAccountRepository, never()).save(any());
     }
 }

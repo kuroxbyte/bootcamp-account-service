@@ -23,6 +23,42 @@ class CheckingAccountTest {
             "2",
             CustomerType.BUSINESS,
             CustomerProfile.STANDARD);
+    private final Customer pyme = new Customer(
+            "3",
+            CustomerType.BUSINESS,
+            CustomerProfile.PYME);
+
+    @Test
+    void pymeAccountHasNoMaintenanceFee() {
+        CheckingAccount withoutFee = new CheckingAccount(
+                pyme,
+                TestOpenings.NONE,
+                null,
+                List.of("10"),
+                List.of());
+        CheckingAccount withZeroFee = new CheckingAccount(
+                pyme,
+                TestOpenings.NONE,
+                BigDecimal.ZERO,
+                List.of("10"),
+                List.of());
+
+        assertThat(withoutFee.getMaintenanceFee()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(withZeroFee.getMaintenanceFee()).isEqualByComparingTo(BigDecimal.ZERO);
+    }
+
+    @Test
+    void pymeAccountRejectsMaintenanceFee() {
+        assertThatThrownBy(
+                        () -> new CheckingAccount(
+                                pyme,
+                                TestOpenings.NONE,
+                                BigDecimal.TEN,
+                                List.of("10"),
+                                List.of()))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("La cuenta corriente PYME no tiene comisión de mantenimiento");
+    }
 
     @Test
     void requiresMaintenanceFee() {

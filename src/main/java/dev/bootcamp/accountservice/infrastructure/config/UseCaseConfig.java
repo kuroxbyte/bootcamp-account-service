@@ -1,6 +1,7 @@
 package dev.bootcamp.accountservice.infrastructure.config;
 
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
+import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCaseImpl;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 
 /**
  * Registra los casos de uso como beans. Los casos de uso no dependen de Spring; aquí se les
@@ -27,11 +29,18 @@ public class UseCaseConfig {
     public CreateBankAccountUseCase createBankAccountUseCase(
             BankAccountRepository bankAccountRepository,
             CustomerClient customerClient,
-            MinimumOpeningAmounts minimumOpeningAmounts) {
+            CreditCardClient creditCardClient,
+            MinimumOpeningAmounts minimumOpeningAmounts,
+            @Value("${accounts.vip-savings.minimum-daily-average}")
+            BigDecimal vipMinimumDailyAverage,
+            Clock clock) {
         return new CreateBankAccountUseCaseImpl(
                 bankAccountRepository,
                 customerClient,
-                minimumOpeningAmounts);
+                creditCardClient,
+                minimumOpeningAmounts,
+                vipMinimumDailyAverage,
+                clock);
     }
 
     /**
@@ -43,6 +52,14 @@ public class UseCaseConfig {
             @Value("${accounts.minimum-opening-amount.checking:0}") BigDecimal checking,
             @Value("${accounts.minimum-opening-amount.fixed-term:0}") BigDecimal fixedTerm) {
         return new MinimumOpeningAmounts(savings, checking, fixedTerm);
+    }
+
+    /**
+     * Reloj del sistema; con él se fija la fecha de apertura de las cuentas.
+     */
+    @Bean
+    public Clock clock() {
+        return Clock.systemDefaultZone();
     }
 
     /**

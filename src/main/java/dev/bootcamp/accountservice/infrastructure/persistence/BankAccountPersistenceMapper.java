@@ -5,6 +5,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -27,7 +28,14 @@ final class BankAccountPersistenceMapper {
                         .customerType(account.getCustomer().type().name())
                         .customerProfile(account.getCustomer().profile().name())
                         .minimumOpeningAmount(account.getOpening().minimum())
-                        .openingAmount(account.getOpening().amount());
+                        .openingAmount(account.getOpening().amount())
+                        .openedAt(account.getOpenedAt());
+        if (account instanceof VipSavingsAccount vipSavings) {
+            return document.type(SAVINGS)
+                    .maxMonthlyMovements(vipSavings.getMaxMonthlyMovements())
+                    .minimumDailyAverage(vipSavings.getMinimumDailyAverage())
+                    .build();
+        }
         if (account instanceof SavingsAccount savings) {
             return document.type(SAVINGS)
                     .maxMonthlyMovements(savings.getMaxMonthlyMovements())
@@ -58,10 +66,13 @@ final class BankAccountPersistenceMapper {
                 document.getMinimumOpeningAmount(),
                 document.getOpeningAmount());
         BankAccount account = switch (document.getType()) {
-            case SAVINGS -> new SavingsAccount(
-                    customer,
-                    opening,
-                    document.getMaxMonthlyMovements());
+            case SAVINGS -> document.getMinimumDailyAverage() == null
+                    ? new SavingsAccount(customer, opening, document.getMaxMonthlyMovements())
+                    : new VipSavingsAccount(
+                            customer,
+                            opening,
+                            document.getMaxMonthlyMovements(),
+                            document.getMinimumDailyAverage());
             case CHECKING -> new CheckingAccount(
                     customer,
                     opening,
@@ -76,7 +87,7 @@ final class BankAccountPersistenceMapper {
                     "Tipo de cuenta desconocido: " + document.getType());
         };
         account.setId(document.getId());
+        account.setOpenedAt(document.getOpenedAt());
         return account;
     }
-
 }

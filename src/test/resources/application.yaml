@@ -17,6 +17,12 @@ clients:
   customer-service:
     base-url: http://customer-service
     timeout: 3s
+  credit-service:
+    base-url: http://credit-service
+
+accounts:
+  vip-savings:
+    minimum-daily-average: 500
 
 eureka:
   client:
