@@ -7,6 +7,7 @@ import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -21,7 +22,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GetBankAccountsUseCaseImplTest {
 
-    private static final Customer PERSONAL = new Customer("1", CustomerType.PERSONAL);
+    private static final Customer PERSONAL = new Customer(
+            "1",
+            CustomerType.PERSONAL,
+            CustomerProfile.STANDARD);
 
     @Mock private BankAccountRepository bankAccountRepository;
 

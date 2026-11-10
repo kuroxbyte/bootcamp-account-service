@@ -2,6 +2,7 @@ package dev.bootcamp.accountservice.domain.model.account;
 
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import org.junit.jupiter.api.Test;
 
@@ -14,8 +15,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CheckingAccountTest {
 
-    private final Customer personal = new Customer("1", CustomerType.PERSONAL);
-    private final Customer business = new Customer("2", CustomerType.BUSINESS);
+    private final Customer personal = new Customer(
+            "1",
+            CustomerType.PERSONAL,
+            CustomerProfile.STANDARD);
+    private final Customer business = new Customer(
+            "2",
+            CustomerType.BUSINESS,
+            CustomerProfile.STANDARD);
 
     @Test
     void requiresMaintenanceFee() {

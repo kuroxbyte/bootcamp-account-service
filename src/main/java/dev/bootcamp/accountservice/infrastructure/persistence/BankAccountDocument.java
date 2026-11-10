@@ -29,6 +29,11 @@ public class BankAccountDocument {
     private final String customerType;
 
     /**
+     * Perfil del cliente (STANDARD, VIP o PYME).
+     */
+    private final String customerProfile;
+
+    /**
      * SAVINGS, CHECKING o FIXED_TERM.
      */
     private final String type;

@@ -10,6 +10,7 @@ import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import io.reactivex.rxjava3.core.Flowable;
@@ -34,8 +35,14 @@ import static org.mockito.Mockito.when;
 @WebFluxTest(AccountController.class)
 class AccountControllerTest {
 
-    private static final Customer PERSONAL = new Customer("1", CustomerType.PERSONAL);
-    private static final Customer BUSINESS = new Customer("2", CustomerType.BUSINESS);
+    private static final Customer PERSONAL = new Customer(
+            "1",
+            CustomerType.PERSONAL,
+            CustomerProfile.STANDARD);
+    private static final Customer BUSINESS = new Customer(
+            "2",
+            CustomerType.BUSINESS,
+            CustomerProfile.STANDARD);
 
     @Autowired private WebTestClient webTestClient;
 
