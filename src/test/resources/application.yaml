@@ -23,6 +23,16 @@ clients:
 accounts:
   vip-savings:
     minimum-daily-average: 500
+  transaction-fee:
+    savings:
+      free-monthly-transactions: 4
+      amount: 1.00
+    checking:
+      free-monthly-transactions: 3
+      amount: 2.00
+    fixed-term:
+      free-monthly-transactions: 1
+      amount: 5.00
 
 eureka:
   client:

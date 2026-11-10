@@ -11,6 +11,8 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFees;
 import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
@@ -35,6 +37,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private final CustomerClient customerClient;
     private final CreditCardClient creditCardClient;
     private final MinimumOpeningAmounts minimumOpeningAmounts;
+    private final TransactionFees transactionFees;
     private final BigDecimal vipMinimumDailyAverage;
     private final Clock clock;
 
@@ -42,6 +45,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
      * Crea el caso de uso con los adaptadores de sus puertos y la configuración de los productos.
      *
      * @param minimumOpeningAmounts  mínimos de apertura por tipo de cuenta
+     * @param transactionFees        comisión por transacción por tipo de cuenta
      * @param vipMinimumDailyAverage mínimo de promedio diario mensual de la cuenta de ahorro VIP
      * @param clock                  reloj con el que se fija la fecha de apertura
      */
@@ -50,12 +54,14 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
             CustomerClient customerClient,
             CreditCardClient creditCardClient,
             MinimumOpeningAmounts minimumOpeningAmounts,
+            TransactionFees transactionFees,
             BigDecimal vipMinimumDailyAverage,
             Clock clock) {
         this.bankAccountRepository = bankAccountRepository;
         this.customerClient = customerClient;
         this.creditCardClient = creditCardClient;
         this.minimumOpeningAmounts = minimumOpeningAmounts;
+        this.transactionFees = transactionFees;
         this.vipMinimumDailyAverage = vipMinimumDailyAverage;
         this.clock = clock;
     }
@@ -69,7 +75,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
                 .map(customer -> savingsAccount(customer, maxMonthlyMovements, openingAmount))
                 .flatMap(account -> validateCreditCard(account, CustomerProfile.VIP))
                 .flatMap(account -> validatePersonalLimit(account, SavingsAccount.class))
-                .flatMap(this::save);
+                .flatMap(account -> save(account, transactionFees.savings()));
     }
 
     @Override
@@ -88,7 +94,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
                         authorizedSignerIds))
                 .flatMap(account -> validateCreditCard(account, CustomerProfile.PYME))
                 .flatMap(account -> validatePersonalLimit(account, CheckingAccount.class))
-                .flatMap(this::save);
+                .flatMap(account -> save(account, transactionFees.checking()));
     }
 
     @Override
@@ -101,7 +107,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
                         customer,
                         new OpeningAmount(minimumOpeningAmounts.fixedTerm(), openingAmount),
                         movementDayOfMonth))
-                .flatMap(this::save);
+                .flatMap(account -> save(account, transactionFees.fixedTerm()));
     }
 
     private Single<Customer> findCustomer(String customerId) {
@@ -155,8 +161,9 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
                         : Single.just(account));
     }
 
-    private <T extends BankAccount> Single<T> save(T account) {
+    private <T extends BankAccount> Single<T> save(T account, TransactionFee transactionFee) {
         account.setOpenedAt(LocalDate.now(clock));
+        account.setTransactionFee(transactionFee);
         return bankAccountRepository.save(account);
     }
 }

@@ -29,6 +29,8 @@ import java.util.List;
  *   <li>Cliente PYME: su cuenta corriente no tiene comisión de mantenimiento y debe tener una
  *       tarjeta de crédito con el banco al abrirla.
  *   <li>La fecha de apertura es la fecha actual.
+ *   <li>La cuenta guarda las transacciones al mes sin comisión y la comisión por cada transacción
+ *       adicional configuradas para su tipo.
  * </ul>
  *
  * <p>Es reactivo: no hace nada hasta que se suscribe al {@link Single}. Termina con error {@link

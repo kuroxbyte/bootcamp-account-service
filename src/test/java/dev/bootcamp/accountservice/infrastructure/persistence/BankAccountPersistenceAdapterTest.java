@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
 import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
@@ -147,5 +148,16 @@ class BankAccountPersistenceAdapterTest {
 
         BankAccount found = adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getOpenedAt()).isEqualTo(LocalDate.of(2026, 11, 15));
+    }
+
+    @Test
+    void keepsTransactionFee() {
+        SavingsAccount account = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
+        account.setTransactionFee(new TransactionFee(4, new BigDecimal("1.50")));
+        SavingsAccount saved = adapter.save(account).blockingGet();
+
+        BankAccount found = adapter.findById(saved.getId()).blockingGet();
+        assertThat(found.getTransactionFee().freeMonthlyTransactions()).isEqualTo(4);
+        assertThat(found.getTransactionFee().amount()).isEqualByComparingTo("1.50");
     }
 }

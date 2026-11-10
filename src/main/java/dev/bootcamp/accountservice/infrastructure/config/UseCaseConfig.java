@@ -8,6 +8,8 @@ import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCaseI
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCaseImpl;
 import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFees;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +33,7 @@ public class UseCaseConfig {
             CustomerClient customerClient,
             CreditCardClient creditCardClient,
             MinimumOpeningAmounts minimumOpeningAmounts,
+            TransactionFees transactionFees,
             @Value("${accounts.vip-savings.minimum-daily-average}")
             BigDecimal vipMinimumDailyAverage,
             Clock clock) {
@@ -39,6 +42,7 @@ public class UseCaseConfig {
                 customerClient,
                 creditCardClient,
                 minimumOpeningAmounts,
+                transactionFees,
                 vipMinimumDailyAverage,
                 clock);
     }
@@ -52,6 +56,26 @@ public class UseCaseConfig {
             @Value("${accounts.minimum-opening-amount.checking:0}") BigDecimal checking,
             @Value("${accounts.minimum-opening-amount.fixed-term:0}") BigDecimal fixedTerm) {
         return new MinimumOpeningAmounts(savings, checking, fixedTerm);
+    }
+
+    /**
+     * Comisión por transacción de cada tipo de cuenta, definida en config-repo.
+     */
+    @Bean
+    public TransactionFees transactionFees(
+            @Value("${accounts.transaction-fee.savings.free-monthly-transactions}")
+            int savingsFree,
+            @Value("${accounts.transaction-fee.savings.amount}") BigDecimal savingsAmount,
+            @Value("${accounts.transaction-fee.checking.free-monthly-transactions}")
+            int checkingFree,
+            @Value("${accounts.transaction-fee.checking.amount}") BigDecimal checkingAmount,
+            @Value("${accounts.transaction-fee.fixed-term.free-monthly-transactions}")
+            int fixedTermFree,
+            @Value("${accounts.transaction-fee.fixed-term.amount}") BigDecimal fixedTermAmount) {
+        return new TransactionFees(
+                new TransactionFee(savingsFree, savingsAmount),
+                new TransactionFee(checkingFree, checkingAmount),
+                new TransactionFee(fixedTermFree, fixedTermAmount));
     }
 
     /**
