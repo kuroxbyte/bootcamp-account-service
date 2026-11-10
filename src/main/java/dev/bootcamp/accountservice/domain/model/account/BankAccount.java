@@ -11,11 +11,13 @@ import lombok.Setter;
 public abstract class BankAccount {
     @Setter private String id;
     private final Customer customer;
+    private final OpeningAmount opening;
 
     /**
-     * Crea la cuenta para el cliente indicado.
+     * Crea la cuenta para el cliente indicado con su monto de apertura.
      */
-    protected BankAccount(Customer customer) {
+    protected BankAccount(Customer customer, OpeningAmount opening) {
         this.customer = customer;
+        this.opening = opening;
     }
 }

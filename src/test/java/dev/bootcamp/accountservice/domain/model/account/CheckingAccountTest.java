@@ -19,10 +19,20 @@ class CheckingAccountTest {
 
     @Test
     void requiresMaintenanceFee() {
-        assertThatThrownBy(() -> new CheckingAccount(personal, null, List.of(), List.of()))
+        assertThatThrownBy(
+                () -> new CheckingAccount(personal,
+                OpeningAmount.ZERO,
+                null,
+                List.of(),
+                List.of()))
                 .isInstanceOf(BusinessRuleException.class);
         assertThatThrownBy(
-                        () -> new CheckingAccount(personal, BigDecimal.ZERO, List.of(), List.of()))
+                        () -> new CheckingAccount(
+                                personal,
+                                OpeningAmount.ZERO,
+                                BigDecimal.ZERO,
+                                List.of(),
+                                List.of()))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
@@ -31,23 +41,42 @@ class CheckingAccountTest {
         assertThatCode(
                         () ->
                                 new CheckingAccount(
-                                        business, BigDecimal.TEN, List.of("10"), List.of()))
+                                        business,
+                                        OpeningAmount.ZERO,
+                                        BigDecimal.TEN,
+                                        List.of("10"),
+                                        List.of()))
                 .doesNotThrowAnyException();
     }
 
     @Test
     void businessAccountRequiresAtLeastOneHolder() {
         assertThatThrownBy(
-                        () -> new CheckingAccount(business, BigDecimal.TEN, List.of(), List.of()))
+                        () -> new CheckingAccount(
+                                business,
+                                OpeningAmount.ZERO,
+                                BigDecimal.TEN,
+                                List.of(),
+                                List.of()))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThatThrownBy(() -> new CheckingAccount(business, BigDecimal.TEN, null, List.of()))
+        assertThatThrownBy(
+                () -> new CheckingAccount(business,
+                OpeningAmount.ZERO,
+                BigDecimal.TEN,
+                null,
+                List.of()))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
     @Test
     void businessAccountAllowsMultipleHolders() {
         CheckingAccount account =
-                new CheckingAccount(business, BigDecimal.TEN, List.of("10", "11"), List.of());
+                new CheckingAccount(
+                        business,
+                        OpeningAmount.ZERO,
+                        BigDecimal.TEN,
+                        List.of("10", "11"),
+                        List.of());
 
         assertThat(account.getHolderIds()).containsExactly("10", "11");
     }
@@ -55,9 +84,19 @@ class CheckingAccountTest {
     @Test
     void businessAccountAllowsZeroOrMoreAuthorizedSigners() {
         CheckingAccount withoutSigners =
-                new CheckingAccount(business, BigDecimal.TEN, List.of("10"), null);
+                new CheckingAccount(
+                        business,
+                        OpeningAmount.ZERO,
+                        BigDecimal.TEN,
+                        List.of("10"),
+                        null);
         CheckingAccount withSigners =
-                new CheckingAccount(business, BigDecimal.TEN, List.of("10"), List.of("20", "21"));
+                new CheckingAccount(
+                        business,
+                        OpeningAmount.ZERO,
+                        BigDecimal.TEN,
+                        List.of("10"),
+                        List.of("20", "21"));
 
         assertThat(withoutSigners.getAuthorizedSignerIds()).isEmpty();
         assertThat(withSigners.getAuthorizedSignerIds()).containsExactly("20", "21");

@@ -59,7 +59,9 @@ public class AccountController implements AccountsApi {
                 request ->
                         created(
                                 createBankAccountUseCase.openSavingsAccount(
-                                        customerId, request.getMaxMonthlyMovements())));
+                                        customerId,
+                                        request.getMaxMonthlyMovements(),
+                                        request.getOpeningAmount())));
     }
 
     @Override
@@ -74,7 +76,8 @@ public class AccountController implements AccountsApi {
                                         customerId,
                                         request.getMaintenanceFee(),
                                         request.getHolderIds(),
-                                        request.getAuthorizedSignerIds())));
+                                        request.getAuthorizedSignerIds(),
+                                        request.getOpeningAmount())));
     }
 
     @Override
@@ -86,7 +89,9 @@ public class AccountController implements AccountsApi {
                 request ->
                         created(
                                 createBankAccountUseCase.openFixedTermAccount(
-                                        customerId, request.getMovementDayOfMonth())));
+                                        customerId,
+                                        request.getMovementDayOfMonth(),
+                                        request.getOpeningAmount())));
     }
 
     private static Mono<ResponseEntity<AccountResponseDto>> created(

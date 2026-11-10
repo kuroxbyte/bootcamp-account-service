@@ -41,4 +41,10 @@ public class BankAccountDocument {
     private final List<String> holderIds;
     private final List<String> authorizedSignerIds;
     private final Integer movementDayOfMonth;
+
+    @Field(targetType = FieldType.DECIMAL128)
+    private final BigDecimal minimumOpeningAmount;
+
+    @Field(targetType = FieldType.DECIMAL128)
+    private final BigDecimal openingAmount;
 }

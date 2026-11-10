@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
+import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -22,6 +23,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -41,14 +43,14 @@ class AccountControllerTest {
     @MockitoBean private GetBankAccountsUseCase getBankAccountsUseCase;
 
     private static SavingsAccount savings() {
-        SavingsAccount account = new SavingsAccount(PERSONAL, 5);
+        SavingsAccount account = new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5);
         account.setId("10");
         return account;
     }
 
     @Test
     void opensSavingsAccount() {
-        when(createBankAccountUseCase.openSavingsAccount("1", 5))
+        when(createBankAccountUseCase.openSavingsAccount("1", 5, BigDecimal.ZERO))
                 .thenReturn(Single.just(savings()));
 
         webTestClient
@@ -56,7 +58,7 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/savings")
                 .header("X-Customer-Id", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isCreated()
@@ -68,16 +70,25 @@ class AccountControllerTest {
                 .jsonPath("$.type")
                 .isEqualTo("SAVINGS")
                 .jsonPath("$.maxMonthlyMovements")
-                .isEqualTo(5);
+                .isEqualTo(5)
+                .jsonPath("$.minimumOpeningAmount")
+                .isEqualTo(0)
+                .jsonPath("$.openingAmount")
+                .isEqualTo(0);
     }
 
     @Test
     void opensCheckingAccountWithHoldersAndSigners() {
         CheckingAccount checking =
-                new CheckingAccount(BUSINESS, BigDecimal.TEN, List.of("h1"), List.of("s1"));
+                new CheckingAccount(
+                        BUSINESS,
+                        OpeningAmount.ZERO,
+                        BigDecimal.TEN,
+                        List.of("h1"),
+                        List.of("s1"));
         checking.setId("11");
         when(createBankAccountUseCase.openCheckingAccount(
-                        "2", new BigDecimal("10.0"), List.of("h1"), List.of("s1")))
+                        "2", new BigDecimal("10.0"), List.of("h1"), List.of("s1"), BigDecimal.ZERO))
                 .thenReturn(Single.just(checking));
 
         webTestClient
@@ -87,7 +98,7 @@ class AccountControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(
                         "{\"maintenanceFee\":10.0,\"holderIds\":[\"h1\"],"
-                                + "\"authorizedSignerIds\":[\"s1\"]}")
+                                + "\"authorizedSignerIds\":[\"s1\"],\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isCreated()
@@ -102,9 +113,9 @@ class AccountControllerTest {
 
     @Test
     void opensFixedTermAccount() {
-        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, 15);
+        FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 15);
         fixedTerm.setId("12");
-        when(createBankAccountUseCase.openFixedTermAccount("1", 15))
+        when(createBankAccountUseCase.openFixedTermAccount("1", 15, BigDecimal.ZERO))
                 .thenReturn(Single.just(fixedTerm));
 
         webTestClient
@@ -112,7 +123,7 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/fixed-term")
                 .header("X-Customer-Id", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"movementDayOfMonth\":15}")
+                .bodyValue("{\"movementDayOfMonth\":15,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isCreated()
@@ -129,12 +140,12 @@ class AccountControllerTest {
                 .post()
                 .uri("/api/v1/accounts/savings")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isBadRequest();
 
-        verify(createBankAccountUseCase, never()).openSavingsAccount(anyString(), anyInt());
+        verify(createBankAccountUseCase, never()).openSavingsAccount(anyString(), anyInt(), any());
     }
 
     @Test
@@ -144,17 +155,19 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/fixed-term")
                 .header("X-Customer-Id", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"movementDayOfMonth\":40}")
+                .bodyValue("{\"movementDayOfMonth\":40,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isBadRequest();
 
-        verify(createBankAccountUseCase, never()).openFixedTermAccount(anyString(), anyInt());
+        verify(
+                createBankAccountUseCase,
+                never()).openFixedTermAccount(anyString(), anyInt(), any());
     }
 
     @Test
     void returnsNotFoundWhenCustomerDoesNotExist() {
-        when(createBankAccountUseCase.openSavingsAccount("99", 5))
+        when(createBankAccountUseCase.openSavingsAccount("99", 5, BigDecimal.ZERO))
                 .thenReturn(Single.error(new NotFoundException("El cliente no existe")));
 
         webTestClient
@@ -162,7 +175,7 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/savings")
                 .header("X-Customer-Id", "99")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isNotFound()
@@ -172,7 +185,7 @@ class AccountControllerTest {
 
     @Test
     void returnsUnprocessableWhenBusinessRuleIsViolated() {
-        when(createBankAccountUseCase.openSavingsAccount("1", 5))
+        when(createBankAccountUseCase.openSavingsAccount("1", 5, BigDecimal.ZERO))
                 .thenReturn(
                         Single.error(
                                 new BusinessRuleException(
@@ -184,7 +197,7 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/savings")
                 .header("X-Customer-Id", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isEqualTo(422)
@@ -236,7 +249,7 @@ class AccountControllerTest {
 
     @Test
     void returnsServiceUnavailableWhenCustomerServiceIsDown() {
-        when(createBankAccountUseCase.openSavingsAccount("1", 5))
+        when(createBankAccountUseCase.openSavingsAccount("1", 5, BigDecimal.ZERO))
                 .thenReturn(
                         Single.error(
                                 new ServiceUnavailableException(
@@ -248,7 +261,7 @@ class AccountControllerTest {
                 .uri("/api/v1/accounts/savings")
                 .header("X-Customer-Id", "1")
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"maxMonthlyMovements\":5}")
+                .bodyValue("{\"maxMonthlyMovements\":5,\"openingAmount\":0}")
                 .exchange()
                 .expectStatus()
                 .isEqualTo(503)

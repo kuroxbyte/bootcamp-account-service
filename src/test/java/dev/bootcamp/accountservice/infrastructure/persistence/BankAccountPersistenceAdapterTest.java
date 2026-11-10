@@ -3,6 +3,7 @@ package dev.bootcamp.accountservice.infrastructure.persistence;
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
+import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -43,7 +44,8 @@ class BankAccountPersistenceAdapterTest {
 
     @Test
     void savesSavingsAccountAndAssignsId() {
-        SavingsAccount saved = adapter.save(new SavingsAccount(PERSONAL, 5)).blockingGet();
+        SavingsAccount saved = adapter.save(
+                new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)).blockingGet();
 
         assertThat(saved.getId()).isNotBlank();
         BankAccount found = adapter.findById(saved.getId()).blockingGet();
@@ -57,7 +59,7 @@ class BankAccountPersistenceAdapterTest {
         CheckingAccount saved =
                 adapter.save(
                                 new CheckingAccount(
-                                        BUSINESS,
+                                        BUSINESS, OpeningAmount.ZERO,
                                         new BigDecimal("15.50"),
                                         List.of("h1", "h2"),
                                         List.of("s1")))
@@ -71,7 +73,8 @@ class BankAccountPersistenceAdapterTest {
 
     @Test
     void savesFixedTermAccount() {
-        FixedTermAccount saved = adapter.save(new FixedTermAccount(PERSONAL, 15)).blockingGet();
+        FixedTermAccount saved = adapter.save(
+                new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 15)).blockingGet();
 
         FixedTermAccount found = (FixedTermAccount) adapter.findById(saved.getId()).blockingGet();
         assertThat(found.getMovementDayOfMonth()).isEqualTo(15);
@@ -79,9 +82,15 @@ class BankAccountPersistenceAdapterTest {
 
     @Test
     void findsAccountsByCustomer() {
-        adapter.save(new SavingsAccount(PERSONAL, 5)).blockingGet();
-        adapter.save(new FixedTermAccount(PERSONAL, 10)).blockingGet();
-        adapter.save(new CheckingAccount(BUSINESS, BigDecimal.TEN, List.of("h1"), List.of()))
+        adapter.save(new SavingsAccount(PERSONAL, OpeningAmount.ZERO, 5)).blockingGet();
+        adapter.save(new FixedTermAccount(PERSONAL, OpeningAmount.ZERO, 10)).blockingGet();
+        adapter.save(
+                new CheckingAccount(
+                        BUSINESS,
+                        OpeningAmount.ZERO,
+                        BigDecimal.TEN,
+                        List.of("h1"),
+                        List.of()))
                 .blockingGet();
 
         adapter.findByCustomerId("c1").test().awaitDone(5, TimeUnit.SECONDS).assertValueCount(2);
@@ -94,5 +103,28 @@ class BankAccountPersistenceAdapterTest {
                 .awaitDone(5, TimeUnit.SECONDS)
                 .assertComplete()
                 .assertNoValues();
+    }
+
+    @Test
+    void keepsMinimumAndOpeningAmount() {
+        OpeningAmount opening = new OpeningAmount(new BigDecimal("50"), new BigDecimal("120.75"));
+        SavingsAccount saved = adapter.save(new SavingsAccount(PERSONAL, opening, 5)).blockingGet();
+
+        BankAccount found = adapter.findById(saved.getId()).blockingGet();
+        assertThat(found.getOpening().minimum()).isEqualByComparingTo("50");
+        assertThat(found.getOpening().amount()).isEqualByComparingTo("120.75");
+    }
+
+    @Test
+    void readsAccountsSavedWithoutOpeningAmountAsZero() {
+        BankAccountDocument legacy = BankAccountDocument.builder()
+                .customerId("c1")
+                .customerType("PERSONAL")
+                .type("SAVINGS")
+                .maxMonthlyMovements(5)
+                .build();
+        String id = mongoRepository.save(legacy).block().getId();
+
+        assertThat(adapter.findById(id).blockingGet().getOpening()).isEqualTo(OpeningAmount.ZERO);
     }
 }

@@ -5,8 +5,6 @@ import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import dev.bootcamp.accountservice.infrastructure.client.StubWebClient;
 import dev.bootcamp.accountservice.infrastructure.client.TestCircuitBreakers;
-import dev.bootcamp.accountservice.infrastructure.client.TestCircuitBreakers;
-import dev.bootcamp.accountservice.infrastructure.client.TestCircuitBreakers;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
@@ -18,7 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class CustomerWebClientAdapterTest {
 
     private static CustomerWebClientAdapter adapter(StubWebClient stub, Duration timeout) {
-        return new CustomerWebClientAdapter(stub.builder(), "http://customer-service", TestCircuitBreakers.remoteLookup(timeout));
+        return new CustomerWebClientAdapter(
+                stub.builder(),
+                "http://customer-service",
+                TestCircuitBreakers.remoteLookup(timeout));
     }
 
     @Test

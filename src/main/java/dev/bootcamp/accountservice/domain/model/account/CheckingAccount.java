@@ -26,10 +26,11 @@ public class CheckingAccount extends BankAccount {
      */
     public CheckingAccount(
             Customer customer,
+            OpeningAmount opening,
             BigDecimal maintenanceFee,
             List<String> holderIds,
             List<String> authorizedSignerIds) {
-        super(customer);
+        super(customer, opening);
         if (maintenanceFee == null || maintenanceFee.signum() <= 0) {
             throw new BusinessRuleException(
                     "La cuenta corriente debe tener comisión de mantenimiento");

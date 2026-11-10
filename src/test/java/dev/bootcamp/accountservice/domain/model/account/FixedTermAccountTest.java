@@ -14,14 +14,17 @@ class FixedTermAccountTest {
 
     @Test
     void createsWithValidMovementDay() {
-        assertThatCode(() -> new FixedTermAccount(personal, 15)).doesNotThrowAnyException();
+        assertThatCode(
+                () -> new FixedTermAccount(personal,
+                OpeningAmount.ZERO,
+                15)).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsInvalidMovementDay() {
-        assertThatThrownBy(() -> new FixedTermAccount(personal, 0))
+        assertThatThrownBy(() -> new FixedTermAccount(personal, OpeningAmount.ZERO, 0))
                 .isInstanceOf(BusinessRuleException.class);
-        assertThatThrownBy(() -> new FixedTermAccount(personal, 32))
+        assertThatThrownBy(() -> new FixedTermAccount(personal, OpeningAmount.ZERO, 32))
                 .isInstanceOf(BusinessRuleException.class);
     }
 
@@ -29,7 +32,7 @@ class FixedTermAccountTest {
     void rejectsBusinessCustomer() {
         Customer business = new Customer("2", CustomerType.BUSINESS);
 
-        assertThatThrownBy(() -> new FixedTermAccount(business, 15))
+        assertThatThrownBy(() -> new FixedTermAccount(business, OpeningAmount.ZERO, 15))
                 .isInstanceOf(BusinessRuleException.class);
     }
 }

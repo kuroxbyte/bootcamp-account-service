@@ -18,8 +18,11 @@ public class SavingsAccount extends BankAccount {
      *
      * @throws BusinessRuleException si el cliente es empresarial o el límite no es mayor a 0
      */
-    public SavingsAccount(Customer customer, int maxMonthlyMovements) {
-        super(customer);
+    public SavingsAccount(
+            Customer customer,
+            OpeningAmount opening,
+            int maxMonthlyMovements) {
+        super(customer, opening);
         if (customer.type() == CustomerType.BUSINESS) {
             throw new BusinessRuleException(
                     "Un cliente empresarial no puede tener una cuenta de ahorro");
