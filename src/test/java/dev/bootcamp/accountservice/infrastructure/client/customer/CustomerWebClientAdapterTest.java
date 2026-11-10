@@ -1,6 +1,7 @@
 package dev.bootcamp.accountservice.infrastructure.client.customer;
 
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import dev.bootcamp.accountservice.infrastructure.client.StubWebClient;
@@ -27,13 +28,14 @@ class CustomerWebClientAdapterTest {
         StubWebClient stub =
                 StubWebClient.respondingWith(
                         HttpStatus.OK,
-                        "{\"id\":\"1\",\"name\":\"Ana Torres\",\"type\":\"PERSONAL\"}");
+                        "{\"id\":\"1\",\"name\":\"Ana Torres\",\"type\":\"PERSONAL\","
+                                + "\"profile\":\"STANDARD\"}");
 
         adapter(stub, Duration.ofSeconds(1))
                 .findById("1")
                 .test()
                 .awaitDone(2, TimeUnit.SECONDS)
-                .assertValue(new Customer("1", CustomerType.PERSONAL));
+                .assertValue(new Customer("1", CustomerType.PERSONAL, CustomerProfile.STANDARD));
         assertThat(stub.lastPath()).isEqualTo("/api/v1/customers/1");
     }
 

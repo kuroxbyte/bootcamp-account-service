@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 
 /**
@@ -24,6 +25,7 @@ final class BankAccountPersistenceMapper {
                         .id(account.getId())
                         .customerId(account.getCustomer().id())
                         .customerType(account.getCustomer().type().name())
+                        .customerProfile(account.getCustomer().profile().name())
                         .minimumOpeningAmount(account.getOpening().minimum())
                         .openingAmount(account.getOpening().amount());
         if (account instanceof SavingsAccount savings) {
@@ -50,7 +52,8 @@ final class BankAccountPersistenceMapper {
     static BankAccount toDomain(BankAccountDocument document) {
         Customer customer = new Customer(
                 document.getCustomerId(),
-                CustomerType.valueOf(document.getCustomerType()));
+                CustomerType.valueOf(document.getCustomerType()),
+                CustomerProfile.valueOf(document.getCustomerProfile()));
         OpeningAmount opening = new OpeningAmount(
                 document.getMinimumOpeningAmount(),
                 document.getOpeningAmount());

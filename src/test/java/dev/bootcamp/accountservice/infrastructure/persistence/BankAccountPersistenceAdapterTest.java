@@ -7,6 +7,7 @@ import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
+import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,14 @@ class BankAccountPersistenceAdapterTest {
 
     @Container @ServiceConnection static MongoDBContainer mongo = new MongoDBContainer("mongo:7.0");
 
-    private static final Customer PERSONAL = new Customer("c1", CustomerType.PERSONAL);
-    private static final Customer BUSINESS = new Customer("c2", CustomerType.BUSINESS);
+    private static final Customer PERSONAL = new Customer(
+            "c1",
+            CustomerType.PERSONAL,
+            CustomerProfile.STANDARD);
+    private static final Customer BUSINESS = new Customer(
+            "c2",
+            CustomerType.BUSINESS,
+            CustomerProfile.STANDARD);
 
     @Autowired private BankAccountPersistenceAdapter adapter;
 
