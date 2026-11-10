@@ -7,6 +7,8 @@ import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
+import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
+import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
@@ -24,21 +26,30 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
 
     private final BankAccountRepository bankAccountRepository;
     private final CustomerClient customerClient;
+    private final MinimumOpeningAmounts minimumOpeningAmounts;
 
     /**
-     * Crea el caso de uso con los adaptadores de sus puertos.
+     * Crea el caso de uso con los adaptadores de sus puertos y los mínimos de apertura por tipo.
      */
     public CreateBankAccountUseCaseImpl(
             BankAccountRepository bankAccountRepository,
-            CustomerClient customerClient) {
+            CustomerClient customerClient,
+            MinimumOpeningAmounts minimumOpeningAmounts) {
         this.bankAccountRepository = bankAccountRepository;
         this.customerClient = customerClient;
+        this.minimumOpeningAmounts = minimumOpeningAmounts;
     }
 
     @Override
-    public Single<SavingsAccount> openSavingsAccount(String customerId, int maxMonthlyMovements) {
+    public Single<SavingsAccount> openSavingsAccount(
+            String customerId,
+            int maxMonthlyMovements,
+            BigDecimal openingAmount) {
         return findCustomer(customerId)
-                .map(customer -> new SavingsAccount(customer, maxMonthlyMovements))
+                .map(customer -> new SavingsAccount(
+                        customer,
+                        new OpeningAmount(minimumOpeningAmounts.savings(), openingAmount),
+                        maxMonthlyMovements))
                 .flatMap(this::validatePersonalLimit)
                 .flatMap(bankAccountRepository::save);
     }
@@ -48,12 +59,15 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
             String customerId,
             BigDecimal maintenanceFee,
             List<String> holderIds,
-            List<String> authorizedSignerIds) {
+            List<String> authorizedSignerIds,
+            BigDecimal openingAmount) {
         return findCustomer(customerId)
-                .map(
-                        customer ->
-                                new CheckingAccount(
-                                        customer, maintenanceFee, holderIds, authorizedSignerIds))
+                .map(customer -> new CheckingAccount(
+                        customer,
+                        new OpeningAmount(minimumOpeningAmounts.checking(), openingAmount),
+                        maintenanceFee,
+                        holderIds,
+                        authorizedSignerIds))
                 .flatMap(this::validatePersonalLimit)
                 .flatMap(bankAccountRepository::save);
     }
@@ -61,9 +75,13 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     @Override
     public Single<FixedTermAccount> openFixedTermAccount(
             String customerId,
-            int movementDayOfMonth) {
+            int movementDayOfMonth,
+            BigDecimal openingAmount) {
         return findCustomer(customerId)
-                .map(customer -> new FixedTermAccount(customer, movementDayOfMonth))
+                .map(customer -> new FixedTermAccount(
+                        customer,
+                        new OpeningAmount(minimumOpeningAmounts.fixedTerm(), openingAmount),
+                        movementDayOfMonth))
                 .flatMap(bankAccountRepository::save);
     }
 

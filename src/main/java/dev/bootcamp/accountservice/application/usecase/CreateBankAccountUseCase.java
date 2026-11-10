@@ -22,6 +22,8 @@ import java.util.List;
  *   <li>Cliente empresarial: no puede tener cuentas de ahorro ni a plazo fijo; cuentas corrientes
  *       sin límite.
  *   <li>Cuenta empresarial: uno o más titulares y cero o más firmantes autorizados.
+ *   <li>El monto de apertura debe ser al menos el mínimo de apertura del tipo de cuenta, que puede
+ *       ser 0; es el saldo inicial de la cuenta.
  * </ul>
  *
  * <p>Es reactivo: no hace nada hasta que se suscribe al {@link Single}. Termina con error {@link
@@ -36,10 +38,15 @@ public interface CreateBankAccountUseCase {
      *
      * @param customerId id del cliente en customer-service
      * @param maxMonthlyMovements límite máximo de movimientos mensuales
+     * @param openingAmount monto de apertura
      * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link
-     *     BusinessRuleException} si es empresarial, o es personal y ya tiene una cuenta de ahorro
+     *     BusinessRuleException} si es empresarial, es personal y ya tiene una cuenta de ahorro, o
+     *     el monto de apertura es menor que el mínimo
      */
-    Single<SavingsAccount> openSavingsAccount(String customerId, int maxMonthlyMovements);
+    Single<SavingsAccount> openSavingsAccount(
+            String customerId,
+            int maxMonthlyMovements,
+            BigDecimal openingAmount);
 
     /**
      * Abre una cuenta corriente.
@@ -48,23 +55,29 @@ public interface CreateBankAccountUseCase {
      * @param maintenanceFee comisión de mantenimiento
      * @param holderIds titulares de la cuenta (obligatorio al menos uno si es empresarial)
      * @param authorizedSignerIds firmantes autorizados (puede estar vacío)
+     * @param openingAmount monto de apertura
      * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link
-     *     BusinessRuleException} si es personal y ya tiene una cuenta corriente, o es empresarial y
-     *     no tiene titulares
+     *     BusinessRuleException} si es personal y ya tiene una cuenta corriente, es empresarial y
+     *     no tiene titulares, o el monto de apertura es menor que el mínimo
      */
     Single<CheckingAccount> openCheckingAccount(
             String customerId,
             BigDecimal maintenanceFee,
             List<String> holderIds,
-            List<String> authorizedSignerIds);
+            List<String> authorizedSignerIds,
+            BigDecimal openingAmount);
 
     /**
      * Abre una cuenta a plazo fijo.
      *
      * @param customerId id del cliente en customer-service
      * @param movementDayOfMonth día del mes en que se permite el único movimiento
+     * @param openingAmount monto de apertura
      * @return la cuenta guardada; error {@link NotFoundException} si el cliente no existe; {@link
-     *     BusinessRuleException} si es empresarial
+     *     BusinessRuleException} si es empresarial o el monto de apertura es menor que el mínimo
      */
-    Single<FixedTermAccount> openFixedTermAccount(String customerId, int movementDayOfMonth);
+    Single<FixedTermAccount> openFixedTermAccount(
+            String customerId,
+            int movementDayOfMonth,
+            BigDecimal openingAmount);
 }

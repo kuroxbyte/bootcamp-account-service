@@ -22,6 +22,8 @@ public final class AccountWebMapper {
                 new AccountResponseDto()
                         .id(account.getId())
                         .customerId(account.getCustomer().id())
+                        .minimumOpeningAmount(account.getOpening().minimum())
+                        .openingAmount(account.getOpening().amount())
                         .holderIds(null)
                         .authorizedSignerIds(null);
         if (account instanceof SavingsAccount savings) {

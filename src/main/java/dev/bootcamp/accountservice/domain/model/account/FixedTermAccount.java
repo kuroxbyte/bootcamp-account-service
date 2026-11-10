@@ -18,8 +18,11 @@ public class FixedTermAccount extends BankAccount {
      *
      * @throws BusinessRuleException si el cliente es empresarial o el día no está entre 1 y 31
      */
-    public FixedTermAccount(Customer customer, int movementDayOfMonth) {
-        super(customer);
+    public FixedTermAccount(
+            Customer customer,
+            OpeningAmount opening,
+            int movementDayOfMonth) {
+        super(customer, opening);
         if (customer.type() == CustomerType.BUSINESS) {
             throw new BusinessRuleException(
                     "Un cliente empresarial no puede tener una cuenta a plazo fijo");
