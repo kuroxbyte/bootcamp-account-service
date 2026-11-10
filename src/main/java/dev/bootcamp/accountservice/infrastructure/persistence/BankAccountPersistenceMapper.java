@@ -5,6 +5,7 @@ import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
 import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
@@ -30,6 +31,10 @@ final class BankAccountPersistenceMapper {
                         .minimumOpeningAmount(account.getOpening().minimum())
                         .openingAmount(account.getOpening().amount())
                         .openedAt(account.getOpenedAt());
+        if (account.getTransactionFee() != null) {
+            document.freeMonthlyTransactions(account.getTransactionFee().freeMonthlyTransactions())
+                    .transactionFee(account.getTransactionFee().amount());
+        }
         if (account instanceof VipSavingsAccount vipSavings) {
             return document.type(SAVINGS)
                     .maxMonthlyMovements(vipSavings.getMaxMonthlyMovements())
@@ -88,6 +93,11 @@ final class BankAccountPersistenceMapper {
         };
         account.setId(document.getId());
         account.setOpenedAt(document.getOpenedAt());
+        if (document.getTransactionFee() != null) {
+            account.setTransactionFee(new TransactionFee(
+                    document.getFreeMonthlyTransactions(),
+                    document.getTransactionFee()));
+        }
         return account;
     }
 }

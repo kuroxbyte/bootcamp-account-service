@@ -21,6 +21,12 @@ public abstract class BankAccount {
     @Setter private LocalDate openedAt;
 
     /**
+     * Transacciones al mes sin comisión y comisión por cada transacción adicional, según el tipo
+     * de cuenta al momento de abrirla.
+     */
+    @Setter private TransactionFee transactionFee;
+
+    /**
      * Crea la cuenta para el cliente indicado con su monto de apertura.
      */
     protected BankAccount(Customer customer, OpeningAmount opening) {

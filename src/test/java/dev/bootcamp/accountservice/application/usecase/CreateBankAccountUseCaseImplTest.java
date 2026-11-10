@@ -10,6 +10,8 @@ import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFees;
 import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
@@ -57,6 +59,10 @@ class CreateBankAccountUseCaseImplTest {
             CustomerType.BUSINESS,
             CustomerProfile.PYME);
     private static final BigDecimal VIP_MINIMUM_DAILY_AVERAGE = new BigDecimal("500");
+    private static final TransactionFees TRANSACTION_FEES = new TransactionFees(
+            new TransactionFee(4, new BigDecimal("1.00")),
+            new TransactionFee(3, new BigDecimal("2.00")),
+            new TransactionFee(1, new BigDecimal("5.00")));
     private static final Clock CLOCK =
             Clock.fixed(Instant.parse("2026-11-15T10:00:00Z"), ZoneOffset.UTC);
 
@@ -85,6 +91,7 @@ class CreateBankAccountUseCaseImplTest {
                 customerClient,
                 creditCardClient,
                 new MinimumOpeningAmounts(savings, checking, fixedTerm),
+                TRANSACTION_FEES,
                 VIP_MINIMUM_DAILY_AVERAGE,
                 CLOCK);
     }
@@ -369,5 +376,23 @@ class CreateBankAccountUseCaseImplTest {
                 .assertError(BusinessRuleException.class);
         verify(creditCardClient, never()).hasCreditCard(any());
         verify(bankAccountRepository, never()).save(any());
+    }
+
+    @Test
+    void keepsTransactionFeeOfTheAccountType() {
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(bankAccountRepository.findByCustomerId("1")).thenReturn(Flowable.empty());
+        when(bankAccountRepository.save(any())).thenAnswer(inv -> Single.just(inv.getArgument(0)));
+
+        useCase.openSavingsAccount("1", 5, BigDecimal.ZERO).test()
+                .assertValue(account -> account.getTransactionFee()
+                        .equals(TRANSACTION_FEES.savings()));
+        useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of(), BigDecimal.ZERO)
+                .test()
+                .assertValue(account -> account.getTransactionFee()
+                        .equals(TRANSACTION_FEES.checking()));
+        useCase.openFixedTermAccount("1", 10, BigDecimal.ZERO).test()
+                .assertValue(account -> account.getTransactionFee()
+                        .equals(TRANSACTION_FEES.fixedTerm()));
     }
 }

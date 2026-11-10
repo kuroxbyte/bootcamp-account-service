@@ -26,6 +26,9 @@ public final class AccountWebMapper {
                         .minimumOpeningAmount(account.getOpening().minimum())
                         .openingAmount(account.getOpening().amount())
                         .openedAt(account.getOpenedAt())
+                        .freeMonthlyTransactions(
+                                account.getTransactionFee().freeMonthlyTransactions())
+                        .transactionFee(account.getTransactionFee().amount())
                         .holderIds(null)
                         .authorizedSignerIds(null);
         if (account instanceof VipSavingsAccount vipSavings) {

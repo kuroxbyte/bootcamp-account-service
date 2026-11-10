@@ -9,6 +9,7 @@ import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
 import dev.bootcamp.accountservice.domain.model.account.SavingsAccount;
 import dev.bootcamp.accountservice.domain.model.account.TestOpenings;
+import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
 import dev.bootcamp.accountservice.domain.model.account.VipSavingsAccount;
 import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
@@ -46,6 +47,8 @@ class AccountControllerTest {
             CustomerType.BUSINESS,
             CustomerProfile.STANDARD);
 
+    private static final TransactionFee FEE = new TransactionFee(4, new BigDecimal("1.50"));
+
     @Autowired private WebTestClient webTestClient;
 
     @MockitoBean private CreateBankAccountUseCase createBankAccountUseCase;
@@ -55,6 +58,7 @@ class AccountControllerTest {
     private static SavingsAccount savings() {
         SavingsAccount account = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
         account.setId("10");
+        account.setTransactionFee(FEE);
         return account;
     }
 
@@ -84,7 +88,11 @@ class AccountControllerTest {
                 .jsonPath("$.minimumOpeningAmount")
                 .isEqualTo(0)
                 .jsonPath("$.openingAmount")
-                .isEqualTo(0);
+                .isEqualTo(0)
+                .jsonPath("$.freeMonthlyTransactions")
+                .isEqualTo(4)
+                .jsonPath("$.transactionFee")
+                .isEqualTo(1.50);
     }
 
     @Test
@@ -97,6 +105,7 @@ class AccountControllerTest {
                         List.of("h1"),
                         List.of("s1"));
         checking.setId("11");
+        checking.setTransactionFee(FEE);
         when(createBankAccountUseCase.openCheckingAccount(
                         "2", new BigDecimal("10.0"), List.of("h1"), List.of("s1"), BigDecimal.ZERO))
                 .thenReturn(Single.just(checking));
@@ -125,6 +134,7 @@ class AccountControllerTest {
     void opensFixedTermAccount() {
         FixedTermAccount fixedTerm = new FixedTermAccount(PERSONAL, TestOpenings.NONE, 15);
         fixedTerm.setId("12");
+        fixedTerm.setTransactionFee(FEE);
         when(createBankAccountUseCase.openFixedTermAccount("1", 15, BigDecimal.ZERO))
                 .thenReturn(Single.just(fixedTerm));
 
@@ -150,6 +160,7 @@ class AccountControllerTest {
         VipSavingsAccount account =
                 new VipSavingsAccount(vip, TestOpenings.NONE, 5, new BigDecimal("500"));
         account.setId("13");
+        account.setTransactionFee(FEE);
         account.setOpenedAt(LocalDate.of(2026, 11, 15));
         when(createBankAccountUseCase.openSavingsAccount("3", 5, BigDecimal.ZERO))
                 .thenReturn(Single.just(account));
@@ -178,6 +189,7 @@ class AccountControllerTest {
         CheckingAccount checking =
                 new CheckingAccount(pyme, TestOpenings.NONE, null, List.of("h1"), List.of());
         checking.setId("14");
+        checking.setTransactionFee(FEE);
         when(createBankAccountUseCase.openCheckingAccount(
                         "4",
                         null,

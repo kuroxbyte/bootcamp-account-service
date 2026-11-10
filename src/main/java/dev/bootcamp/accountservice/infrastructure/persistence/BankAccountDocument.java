@@ -61,4 +61,9 @@ public class BankAccountDocument {
     private final BigDecimal openingAmount;
 
     private final LocalDate openedAt;
+
+    private final Integer freeMonthlyTransactions;
+
+    @Field(targetType = FieldType.DECIMAL128)
+    private final BigDecimal transactionFee;
 }
