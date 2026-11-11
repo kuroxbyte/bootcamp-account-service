@@ -30,4 +30,9 @@ public class GetBankAccountsUseCaseImpl implements GetBankAccountsUseCase {
                 .findById(accountId)
                 .switchIfEmpty(Single.error(() -> new NotFoundException("La cuenta no existe")));
     }
+
+    @Override
+    public Flowable<BankAccount> findAll() {
+        return bankAccountRepository.findAll();
+    }
 }

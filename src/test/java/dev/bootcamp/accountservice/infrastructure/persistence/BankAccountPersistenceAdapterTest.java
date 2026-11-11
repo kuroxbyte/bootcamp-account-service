@@ -160,4 +160,12 @@ class BankAccountPersistenceAdapterTest {
         assertThat(found.getTransactionFee().freeMonthlyTransactions()).isEqualTo(4);
         assertThat(found.getTransactionFee().amount()).isEqualByComparingTo("1.50");
     }
+
+    @Test
+    void findsAllAccounts() {
+        adapter.save(new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)).blockingGet();
+        adapter.save(new FixedTermAccount(PERSONAL, TestOpenings.NONE, 10)).blockingGet();
+
+        adapter.findAll().test().awaitDone(5, TimeUnit.SECONDS).assertValueCount(2);
+    }
 }

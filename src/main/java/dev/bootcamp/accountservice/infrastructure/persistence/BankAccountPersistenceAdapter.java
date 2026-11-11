@@ -32,6 +32,12 @@ public class BankAccountPersistenceAdapter implements BankAccountRepository {
     }
 
     @Override
+    public Flowable<BankAccount> findAll() {
+        return Flowable.fromPublisher(mongoRepository.findAll())
+                .map(BankAccountPersistenceMapper::toDomain);
+    }
+
+    @Override
     public <T extends BankAccount> Single<T> save(T account) {
         return Single.fromPublisher(
                         mongoRepository.save(BankAccountPersistenceMapper.toDocument(account)))

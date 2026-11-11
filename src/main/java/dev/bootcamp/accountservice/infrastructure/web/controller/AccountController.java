@@ -42,6 +42,14 @@ public class AccountController implements AccountsApi {
     }
 
     @Override
+    public Mono<ResponseEntity<Flux<AccountResponseDto>>> listAllAccounts(
+            ServerWebExchange exchange) {
+        log.debug("Listing all accounts for reports");
+        return Mono.just(ResponseEntity.ok(
+                Flux.from(getBankAccountsUseCase.findAll()).map(AccountWebMapper::toResponse)));
+    }
+
+    @Override
     public Mono<ResponseEntity<AccountResponseDto>> getAccountById(
             String accountId,
             ServerWebExchange exchange) {

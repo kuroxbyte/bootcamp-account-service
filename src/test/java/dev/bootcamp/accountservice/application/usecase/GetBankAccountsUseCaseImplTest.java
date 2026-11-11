@@ -55,4 +55,12 @@ class GetBankAccountsUseCaseImplTest {
 
         useCase.findById("99").test().assertError(NotFoundException.class);
     }
+
+    @Test
+    void listsAllAccountsOfTheBank() {
+        SavingsAccount savings = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
+        when(bankAccountRepository.findAll()).thenReturn(Flowable.just(savings));
+
+        useCase.findAll().test().assertValues(savings);
+    }
 }

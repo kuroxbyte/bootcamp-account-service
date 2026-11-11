@@ -285,6 +285,23 @@ class AccountControllerTest {
     }
 
     @Test
+    void listsAllAccountsForReports() {
+        when(getBankAccountsUseCase.findAll()).thenReturn(Flowable.just(savings()));
+
+        webTestClient
+                .get()
+                .uri("/api/v1/internal/accounts")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$[0].id")
+                .isEqualTo("10")
+                .jsonPath("$[0].type")
+                .isEqualTo("SAVINGS");
+    }
+
+    @Test
     void listsAccountsOfCustomer() {
         when(getBankAccountsUseCase.findByCustomerId("1")).thenReturn(Flowable.just(savings()));
 
