@@ -25,6 +25,11 @@ public interface BankAccountRepository {
     Flowable<BankAccount> findByCustomerId(String customerId);
 
     /**
+     * Todas las cuentas del banco.
+     */
+    Flowable<BankAccount> findAll();
+
+    /**
      * Guarda la cuenta y la emite con el mismo tipo concreto que recibió.
      */
     <T extends BankAccount> Single<T> save(T account);

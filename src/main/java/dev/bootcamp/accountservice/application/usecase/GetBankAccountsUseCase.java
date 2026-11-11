@@ -27,4 +27,11 @@ public interface GetBankAccountsUseCase {
      * @return la cuenta; error {@link NotFoundException} si no existe
      */
     Single<BankAccount> findById(String accountId);
+
+    /**
+     * Lista todas las cuentas del banco; lo usa transaction-service para los reportes.
+     *
+     * @return todas las cuentas; ninguna si el banco no tiene cuentas
+     */
+    Flowable<BankAccount> findAll();
 }
