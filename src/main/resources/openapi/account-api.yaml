@@ -41,6 +41,7 @@ paths:
         Si el cliente es VIP, la cuenta es de ahorro VIP: exige un monto mínimo de promedio diario
         cada mes y el cliente debe tener una tarjeta de crédito con el banco al abrirla.
         El monto de apertura debe ser al menos el mínimo configurado para el tipo (puede ser 0).
+        Se rechaza (422) si el cliente tiene una deuda vencida en algún producto de crédito.
       parameters:
         - $ref: '#/components/parameters/XCustomerId'
       requestBody:
@@ -74,6 +75,7 @@ paths:
         Si el cliente es PYME, la cuenta no tiene comisión de mantenimiento (se omite o se envía 0)
         y el cliente debe tener una tarjeta de crédito con el banco al abrirla.
         El monto de apertura debe ser al menos el mínimo configurado para el tipo (puede ser 0).
+        Se rechaza (422) si el cliente tiene una deuda vencida en algún producto de crédito.
       parameters:
         - $ref: '#/components/parameters/XCustomerId'
       requestBody:
@@ -104,6 +106,7 @@ paths:
         cuenta pagan una comisión fija (ambos valores se configuran por tipo).
         Un cliente personal puede tener varias; un cliente empresarial no puede tener ninguna.
         El monto de apertura debe ser al menos el mínimo configurado para el tipo (puede ser 0).
+        Se rechaza (422) si el cliente tiene una deuda vencida en algún producto de crédito.
       parameters:
         - $ref: '#/components/parameters/XCustomerId'
       requestBody:
@@ -334,7 +337,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     BusinessRuleViolation:
-      description: Se incumple una regla de negocio (por ejemplo, límite de cuentas por tipo de cliente)
+      description: Se incumple una regla de negocio (por ejemplo, límite de cuentas por tipo de cliente o deuda vencida)
       content:
         application/problem+json:
           schema:
