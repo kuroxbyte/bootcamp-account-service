@@ -4,13 +4,22 @@ import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
 import dev.bootcamp.accountservice.application.port.CustomerDebtStatusRepository;
+import dev.bootcamp.accountservice.application.port.DebitCardEventPublisher;
+import dev.bootcamp.accountservice.application.port.DebitCardRepository;
+import dev.bootcamp.accountservice.application.rule.DebitCardAccountRule;
 import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCaseImpl;
+import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCase;
+import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCaseImpl;
+import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCase;
+import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCase;
 import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCaseImpl;
+import dev.bootcamp.accountservice.application.usecase.UpdateDebitCardAccountsUseCase;
+import dev.bootcamp.accountservice.application.usecase.UpdateDebitCardAccountsUseCaseImpl;
 import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
 import dev.bootcamp.accountservice.domain.model.account.TransactionFees;
@@ -117,5 +126,55 @@ public class UseCaseConfig {
     public UpdateCustomerDebtStatusUseCase updateCustomerDebtStatusUseCase(
             CustomerDebtStatusRepository customerDebtStatusRepository) {
         return new UpdateCustomerDebtStatusUseCaseImpl(customerDebtStatusRepository);
+    }
+
+    /**
+     * Regla de asociación de cuentas a tarjetas de débito (una cuenta, una tarjeta).
+     */
+    @Bean
+    public DebitCardAccountRule debitCardAccountRule(
+            BankAccountRepository bankAccountRepository,
+            DebitCardRepository debitCardRepository) {
+        return new DebitCardAccountRule(bankAccountRepository, debitCardRepository);
+    }
+
+    /**
+     * Registra el caso de uso {@link IssueDebitCardUseCase}.
+     */
+    @Bean
+    public IssueDebitCardUseCase issueDebitCardUseCase(
+            DebitCardRepository debitCardRepository,
+            DebitCardAccountRule debitCardAccountRule,
+            OverdueDebtRule overdueDebtRule,
+            DebitCardEventPublisher debitCardEventPublisher,
+            Clock clock) {
+        return new IssueDebitCardUseCaseImpl(
+                debitCardRepository,
+                debitCardAccountRule,
+                overdueDebtRule,
+                debitCardEventPublisher,
+                clock);
+    }
+
+    /**
+     * Registra el caso de uso {@link GetDebitCardsUseCase}.
+     */
+    @Bean
+    public GetDebitCardsUseCase getDebitCardsUseCase(DebitCardRepository debitCardRepository) {
+        return new GetDebitCardsUseCaseImpl(debitCardRepository);
+    }
+
+    /**
+     * Registra el caso de uso {@link UpdateDebitCardAccountsUseCase}.
+     */
+    @Bean
+    public UpdateDebitCardAccountsUseCase updateDebitCardAccountsUseCase(
+            DebitCardRepository debitCardRepository,
+            DebitCardAccountRule debitCardAccountRule,
+            DebitCardEventPublisher debitCardEventPublisher) {
+        return new UpdateDebitCardAccountsUseCaseImpl(
+                debitCardRepository,
+                debitCardAccountRule,
+                debitCardEventPublisher);
     }
 }

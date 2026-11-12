@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Accounts
     description: Cuentas bancarias (pasivos)
+  - name: DebitCards
+    description: Tarjetas de débito asociadas a cuentas bancarias
 paths:
   /api/v1/accounts:
     get:
@@ -158,8 +160,120 @@ paths:
                 $ref: '#/components/schemas/AccountResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+  /api/v1/debit-cards:
+    post:
+      tags: [DebitCards]
+      operationId: issueDebitCard
+      summary: Emitir una tarjeta de débito
+      description: |
+        La tarjeta se asocia a una cuenta principal, de la que salen los pagos, y a otras cuentas
+        del cliente. Cada cuenta debe ser del cliente y no estar asociada a otra tarjeta (una cuenta,
+        una tarjeta); un cliente puede tener varias tarjetas. Se rechaza (422) si el cliente tiene
+        una deuda vencida en algún producto de crédito. Los pagos con la tarjeta los procesa
+        transaction-service.
+      parameters:
+        - $ref: '#/components/parameters/XCustomerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DebitCardRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/DebitCardResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+    get:
+      tags: [DebitCards]
+      operationId: listDebitCards
+      summary: Listar las tarjetas de débito del cliente
+      parameters:
+        - $ref: '#/components/parameters/XCustomerId'
+      responses:
+        '200':
+          description: Tarjetas del cliente (vacío si no tiene)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DebitCardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /api/v1/debit-cards/{debitCardId}:
+    get:
+      tags: [DebitCards]
+      operationId: getDebitCardById
+      summary: Consultar una tarjeta de débito del cliente
+      parameters:
+        - $ref: '#/components/parameters/XCustomerId'
+        - $ref: '#/components/parameters/DebitCardId'
+      responses:
+        '200':
+          $ref: '#/components/responses/DebitCardResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /api/v1/debit-cards/{debitCardId}/accounts:
+    post:
+      tags: [DebitCards]
+      operationId: associateDebitCardAccount
+      summary: Asociar otra cuenta a la tarjeta de débito
+      description: La cuenta debe ser del cliente y no estar asociada a ninguna tarjeta.
+      parameters:
+        - $ref: '#/components/parameters/XCustomerId'
+        - $ref: '#/components/parameters/DebitCardId'
+      requestBody:
+        $ref: '#/components/requestBodies/DebitCardAccount'
+      responses:
+        '200':
+          $ref: '#/components/responses/DebitCardResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+  /api/v1/debit-cards/{debitCardId}/primary-account:
+    put:
+      tags: [DebitCards]
+      operationId: changeDebitCardPrimaryAccount
+      summary: Cambiar la cuenta principal de la tarjeta de débito
+      description: La nueva cuenta principal debe estar asociada a la tarjeta; los pagos saldrán de ella.
+      parameters:
+        - $ref: '#/components/parameters/XCustomerId'
+        - $ref: '#/components/parameters/DebitCardId'
+      requestBody:
+        $ref: '#/components/requestBodies/DebitCardAccount'
+      responses:
+        '200':
+          $ref: '#/components/responses/DebitCardResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
 components:
+  requestBodies:
+    DebitCardAccount:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DebitCardAccountRequest'
   parameters:
+    DebitCardId:
+      name: debitCardId
+      in: path
+      required: true
+      description: Id de la tarjeta de débito
+      schema:
+        type: string
     XCustomerId:
       name: X-Customer-Id
       in: header
@@ -175,6 +289,42 @@ components:
       schema:
         type: string
   schemas:
+    DebitCardRequest:
+      type: object
+      required: [primaryAccountId]
+      properties:
+        primaryAccountId:
+          type: string
+          description: Cuenta de la que salen los pagos con la tarjeta
+        accountIds:
+          type: array
+          description: Otras cuentas del cliente asociadas a la tarjeta (opcional)
+          items:
+            type: string
+    DebitCardAccountRequest:
+      type: object
+      required: [accountId]
+      properties:
+        accountId:
+          type: string
+    DebitCardResponse:
+      type: object
+      required: [id, customerId, primaryAccountId, accountIds, issuedAt]
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        primaryAccountId:
+          type: string
+        accountIds:
+          type: array
+          description: Cuentas asociadas, empezando por la principal
+          items:
+            type: string
+        issuedAt:
+          type: string
+          format: date
     AccountType:
       type: string
       description: Tipo de cuenta bancaria
@@ -312,6 +462,12 @@ components:
           type: string
           format: uri
   responses:
+    DebitCardResult:
+      description: Tarjeta de débito
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/DebitCardResponse'
     AccountCreated:
       description: Cuenta creada
       content:
