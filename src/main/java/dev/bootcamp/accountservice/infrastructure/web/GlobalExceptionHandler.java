@@ -4,6 +4,7 @@ import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,8 @@ import reactor.core.publisher.Mono;
  *   <li>400: datos de entrada inválidos o falta un header; lo resuelve {@link
  *       ResponseEntityExceptionHandler}.
  *   <li>404: {@link NotFoundException}.
- *   <li>422: {@link BusinessRuleException}.
+ *   <li>422: {@link BusinessRuleException}, o una cuenta duplicada entre tarjetas de débito que
+ *       detecta el índice único de MongoDB ({@link DuplicateKeyException}).
  *   <li>503: {@link ServiceUnavailableException}; el detalle ya lo registra el cliente HTTP.
  *   <li>500: cualquier otro error inesperado.
  * </ul>
@@ -45,6 +47,19 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("Business rule violated: {}", ex.getMessage());
         return problem(
                 HttpStatus.UNPROCESSABLE_CONTENT, "Regla de negocio incumplida", ex.getMessage());
+    }
+
+    /**
+     * Responde 422 cuando el índice único rechaza asociar una cuenta a una segunda tarjeta de
+     * débito (dos pedidos a la vez).
+     */
+    @ExceptionHandler(DuplicateKeyException.class)
+    public Mono<ResponseEntity<ProblemDetail>> handleDuplicate(DuplicateKeyException ex) {
+        log.warn("Duplicate debit card account: {}", ex.getMessage());
+        return problem(
+                HttpStatus.UNPROCESSABLE_CONTENT,
+                "Regla de negocio incumplida",
+                "La cuenta ya está asociada a una tarjeta de débito");
     }
 
     /**
