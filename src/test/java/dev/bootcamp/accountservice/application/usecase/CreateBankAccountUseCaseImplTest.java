@@ -3,6 +3,8 @@ package dev.bootcamp.accountservice.application.usecase;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
+import dev.bootcamp.accountservice.application.port.CustomerDebtStatusRepository;
+import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
@@ -34,6 +36,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -72,6 +75,8 @@ class CreateBankAccountUseCaseImplTest {
 
     @Mock private CreditCardClient creditCardClient;
 
+    @Mock private CustomerDebtStatusRepository customerDebtStatusRepository;
+
     private CreateBankAccountUseCaseImpl useCase;
 
     /**
@@ -80,6 +85,9 @@ class CreateBankAccountUseCaseImplTest {
     @BeforeEach
     void createUseCase() {
         useCase = useCaseWithMinimums(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO);
+        // Sin deuda vencida, salvo en las pruebas que la cambian.
+        lenient().when(customerDebtStatusRepository.hasOverdueDebt(any()))
+                .thenReturn(Single.just(false));
     }
 
     private CreateBankAccountUseCaseImpl useCaseWithMinimums(
@@ -90,6 +98,7 @@ class CreateBankAccountUseCaseImplTest {
                 bankAccountRepository,
                 customerClient,
                 creditCardClient,
+                new OverdueDebtRule(customerDebtStatusRepository),
                 new MinimumOpeningAmounts(savings, checking, fixedTerm),
                 TRANSACTION_FEES,
                 VIP_MINIMUM_DAILY_AVERAGE,
@@ -394,5 +403,22 @@ class CreateBankAccountUseCaseImplTest {
         useCase.openFixedTermAccount("1", 10, BigDecimal.ZERO).test()
                 .assertValue(account -> account.getTransactionFee()
                         .equals(TRANSACTION_FEES.fixedTerm()));
+    }
+
+    @Test
+    void customerWithOverdueDebtCannotOpenAnyAccount() {
+        when(customerClient.findById("1")).thenReturn(Maybe.just(PERSONAL));
+        when(customerDebtStatusRepository.hasOverdueDebt("1")).thenReturn(Single.just(true));
+
+        useCase.openSavingsAccount("1", 5, BigDecimal.ZERO).test()
+                .assertError(error -> error instanceof BusinessRuleException
+                        && error.getMessage().equals(
+                                "El cliente tiene una deuda vencida en un producto de crédito"));
+        useCase.openCheckingAccount("1", BigDecimal.TEN, List.of(), List.of(), BigDecimal.ZERO)
+                .test()
+                .assertError(BusinessRuleException.class);
+        useCase.openFixedTermAccount("1", 10, BigDecimal.ZERO).test()
+                .assertError(BusinessRuleException.class);
+        verify(bankAccountRepository, never()).save(any());
     }
 }

@@ -10,6 +10,11 @@ spring:
       enabled: false
   mongodb:
     uri: mongodb://localhost:27017/account_test_db
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      # El consumidor se prueba directamente, sin broker.
+      auto-startup: false
 
 clients:
   customer-service:
@@ -36,3 +41,11 @@ eureka:
   client:
     # Las pruebas no se registran en Eureka.
     enabled: false
+
+messaging:
+  topics:
+    debt-events: debt-events
+
+cache:
+  debt-status:
+    ttl: 10m

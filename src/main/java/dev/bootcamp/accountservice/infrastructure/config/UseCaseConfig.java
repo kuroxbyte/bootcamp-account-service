@@ -3,10 +3,14 @@ package dev.bootcamp.accountservice.infrastructure.config;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
+import dev.bootcamp.accountservice.application.port.CustomerDebtStatusRepository;
+import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCaseImpl;
+import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCase;
+import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCaseImpl;
 import dev.bootcamp.accountservice.domain.model.account.MinimumOpeningAmounts;
 import dev.bootcamp.accountservice.domain.model.account.TransactionFee;
 import dev.bootcamp.accountservice.domain.model.account.TransactionFees;
@@ -32,6 +36,7 @@ public class UseCaseConfig {
             BankAccountRepository bankAccountRepository,
             CustomerClient customerClient,
             CreditCardClient creditCardClient,
+            OverdueDebtRule overdueDebtRule,
             MinimumOpeningAmounts minimumOpeningAmounts,
             TransactionFees transactionFees,
             @Value("${accounts.vip-savings.minimum-daily-average}")
@@ -41,6 +46,7 @@ public class UseCaseConfig {
                 bankAccountRepository,
                 customerClient,
                 creditCardClient,
+                overdueDebtRule,
                 minimumOpeningAmounts,
                 transactionFees,
                 vipMinimumDailyAverage,
@@ -93,5 +99,23 @@ public class UseCaseConfig {
     public GetBankAccountsUseCase getBankAccountsUseCase(
             BankAccountRepository bankAccountRepository) {
         return new GetBankAccountsUseCaseImpl(bankAccountRepository);
+    }
+
+    /**
+     * Regla de deuda vencida que comparten todos los productos.
+     */
+    @Bean
+    public OverdueDebtRule overdueDebtRule(
+            CustomerDebtStatusRepository customerDebtStatusRepository) {
+        return new OverdueDebtRule(customerDebtStatusRepository);
+    }
+
+    /**
+     * Registra el caso de uso {@link UpdateCustomerDebtStatusUseCase}.
+     */
+    @Bean
+    public UpdateCustomerDebtStatusUseCase updateCustomerDebtStatusUseCase(
+            CustomerDebtStatusRepository customerDebtStatusRepository) {
+        return new UpdateCustomerDebtStatusUseCaseImpl(customerDebtStatusRepository);
     }
 }

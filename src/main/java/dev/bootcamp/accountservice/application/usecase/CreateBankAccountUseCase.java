@@ -28,6 +28,7 @@ import java.util.List;
  *       debe tener una tarjeta de crédito con el banco al abrirla.
  *   <li>Cliente PYME: su cuenta corriente no tiene comisión de mantenimiento y debe tener una
  *       tarjeta de crédito con el banco al abrirla.
+ *   <li>El cliente no puede tener deuda vencida en ningún producto de crédito.
  *   <li>La fecha de apertura es la fecha actual.
  *   <li>La cuenta guarda las transacciones al mes sin comisión y la comisión por cada transacción
  *       adicional configuradas para su tipo.

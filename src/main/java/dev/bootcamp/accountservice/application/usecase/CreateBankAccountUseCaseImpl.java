@@ -3,6 +3,7 @@ package dev.bootcamp.accountservice.application.usecase;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
+import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
@@ -36,6 +37,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private final BankAccountRepository bankAccountRepository;
     private final CustomerClient customerClient;
     private final CreditCardClient creditCardClient;
+    private final OverdueDebtRule overdueDebtRule;
     private final MinimumOpeningAmounts minimumOpeningAmounts;
     private final TransactionFees transactionFees;
     private final BigDecimal vipMinimumDailyAverage;
@@ -44,6 +46,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     /**
      * Crea el caso de uso con los adaptadores de sus puertos y la configuración de los productos.
      *
+     * @param overdueDebtRule        regla de deuda vencida que comparten todos los productos
      * @param minimumOpeningAmounts  mínimos de apertura por tipo de cuenta
      * @param transactionFees        comisión por transacción por tipo de cuenta
      * @param vipMinimumDailyAverage mínimo de promedio diario mensual de la cuenta de ahorro VIP
@@ -53,6 +56,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
             BankAccountRepository bankAccountRepository,
             CustomerClient customerClient,
             CreditCardClient creditCardClient,
+            OverdueDebtRule overdueDebtRule,
             MinimumOpeningAmounts minimumOpeningAmounts,
             TransactionFees transactionFees,
             BigDecimal vipMinimumDailyAverage,
@@ -60,6 +64,7 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
         this.bankAccountRepository = bankAccountRepository;
         this.customerClient = customerClient;
         this.creditCardClient = creditCardClient;
+        this.overdueDebtRule = overdueDebtRule;
         this.minimumOpeningAmounts = minimumOpeningAmounts;
         this.transactionFees = transactionFees;
         this.vipMinimumDailyAverage = vipMinimumDailyAverage;
@@ -113,7 +118,9 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private Single<Customer> findCustomer(String customerId) {
         return customerClient
                 .findById(customerId)
-                .switchIfEmpty(Single.error(() -> new NotFoundException("El cliente no existe")));
+                .switchIfEmpty(Single.error(() -> new NotFoundException("El cliente no existe")))
+                .flatMap(customer -> overdueDebtRule.verify(customerId)
+                        .andThen(Single.just(customer)));
     }
 
     // Un cliente VIP siempre abre la cuenta de ahorro VIP.
