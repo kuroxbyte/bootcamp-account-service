@@ -5,19 +5,14 @@ import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.debitcard.DebitCard;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Implementación de {@link GetDebitCardsUseCase}.
  */
+@RequiredArgsConstructor
 public class GetDebitCardsUseCaseImpl implements GetDebitCardsUseCase {
     private final DebitCardRepository debitCardRepository;
-
-    /**
-     * Crea el caso de uso con el adaptador de su puerto.
-     */
-    public GetDebitCardsUseCaseImpl(DebitCardRepository debitCardRepository) {
-        this.debitCardRepository = debitCardRepository;
-    }
 
     @Override
     public Flowable<DebitCard> findByCustomerId(String customerId) {

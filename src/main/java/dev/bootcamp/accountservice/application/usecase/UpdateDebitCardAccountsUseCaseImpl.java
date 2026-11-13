@@ -5,26 +5,16 @@ import dev.bootcamp.accountservice.application.port.DebitCardRepository;
 import dev.bootcamp.accountservice.application.rule.DebitCardAccountRule;
 import dev.bootcamp.accountservice.domain.model.debitcard.DebitCard;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Implementación de {@link UpdateDebitCardAccountsUseCase}.
  */
+@RequiredArgsConstructor
 public class UpdateDebitCardAccountsUseCaseImpl implements UpdateDebitCardAccountsUseCase {
     private final DebitCardRepository debitCardRepository;
     private final DebitCardAccountRule debitCardAccountRule;
     private final DebitCardEventPublisher debitCardEventPublisher;
-
-    /**
-     * Crea el caso de uso con sus puertos y la regla de asociación de cuentas.
-     */
-    public UpdateDebitCardAccountsUseCaseImpl(
-            DebitCardRepository debitCardRepository,
-            DebitCardAccountRule debitCardAccountRule,
-            DebitCardEventPublisher debitCardEventPublisher) {
-        this.debitCardRepository = debitCardRepository;
-        this.debitCardAccountRule = debitCardAccountRule;
-        this.debitCardEventPublisher = debitCardEventPublisher;
-    }
 
     @Override
     public Single<DebitCard> associateAccount(

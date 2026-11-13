@@ -7,6 +7,7 @@ import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
 import dev.bootcamp.accountservice.domain.model.debitcard.DebitCard;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -15,28 +16,13 @@ import java.util.List;
 /**
  * Implementación de {@link IssueDebitCardUseCase}.
  */
+@RequiredArgsConstructor
 public class IssueDebitCardUseCaseImpl implements IssueDebitCardUseCase {
     private final DebitCardRepository debitCardRepository;
     private final DebitCardAccountRule debitCardAccountRule;
     private final OverdueDebtRule overdueDebtRule;
     private final DebitCardEventPublisher debitCardEventPublisher;
     private final Clock clock;
-
-    /**
-     * Crea el caso de uso con sus puertos, sus reglas y el reloj que fija la fecha de emisión.
-     */
-    public IssueDebitCardUseCaseImpl(
-            DebitCardRepository debitCardRepository,
-            DebitCardAccountRule debitCardAccountRule,
-            OverdueDebtRule overdueDebtRule,
-            DebitCardEventPublisher debitCardEventPublisher,
-            Clock clock) {
-        this.debitCardRepository = debitCardRepository;
-        this.debitCardAccountRule = debitCardAccountRule;
-        this.overdueDebtRule = overdueDebtRule;
-        this.debitCardEventPublisher = debitCardEventPublisher;
-        this.clock = clock;
-    }
 
     @Override
     public Single<DebitCard> execute(
