@@ -19,6 +19,7 @@ import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -28,6 +29,7 @@ import java.util.List;
 /**
  * Implementación de {@link CreateBankAccountUseCase}.
  */
+@RequiredArgsConstructor
 public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private static final String PERSONAL_ACCOUNT_LIMIT =
             "Un cliente personal solo puede tener una cuenta de este tipo";
@@ -37,39 +39,31 @@ public class CreateBankAccountUseCaseImpl implements CreateBankAccountUseCase {
     private final BankAccountRepository bankAccountRepository;
     private final CustomerClient customerClient;
     private final CreditCardClient creditCardClient;
-    private final OverdueDebtRule overdueDebtRule;
-    private final MinimumOpeningAmounts minimumOpeningAmounts;
-    private final TransactionFees transactionFees;
-    private final BigDecimal vipMinimumDailyAverage;
-    private final Clock clock;
 
     /**
-     * Crea el caso de uso con los adaptadores de sus puertos y la configuración de los productos.
-     *
-     * @param overdueDebtRule        regla de deuda vencida que comparten todos los productos
-     * @param minimumOpeningAmounts  mínimos de apertura por tipo de cuenta
-     * @param transactionFees        comisión por transacción por tipo de cuenta
-     * @param vipMinimumDailyAverage mínimo de promedio diario mensual de la cuenta de ahorro VIP
-     * @param clock                  reloj con el que se fija la fecha de apertura
+     * Regla de deuda vencida que comparten todos los productos.
      */
-    public CreateBankAccountUseCaseImpl(
-            BankAccountRepository bankAccountRepository,
-            CustomerClient customerClient,
-            CreditCardClient creditCardClient,
-            OverdueDebtRule overdueDebtRule,
-            MinimumOpeningAmounts minimumOpeningAmounts,
-            TransactionFees transactionFees,
-            BigDecimal vipMinimumDailyAverage,
-            Clock clock) {
-        this.bankAccountRepository = bankAccountRepository;
-        this.customerClient = customerClient;
-        this.creditCardClient = creditCardClient;
-        this.overdueDebtRule = overdueDebtRule;
-        this.minimumOpeningAmounts = minimumOpeningAmounts;
-        this.transactionFees = transactionFees;
-        this.vipMinimumDailyAverage = vipMinimumDailyAverage;
-        this.clock = clock;
-    }
+    private final OverdueDebtRule overdueDebtRule;
+
+    /**
+     * Mínimos de apertura por tipo de cuenta.
+     */
+    private final MinimumOpeningAmounts minimumOpeningAmounts;
+
+    /**
+     * Comisión por transacción por tipo de cuenta.
+     */
+    private final TransactionFees transactionFees;
+
+    /**
+     * Mínimo de promedio diario mensual de la cuenta de ahorro VIP.
+     */
+    private final BigDecimal vipMinimumDailyAverage;
+
+    /**
+     * Reloj con el que se fija la fecha de apertura.
+     */
+    private final Clock clock;
 
     @Override
     public Single<SavingsAccount> openSavingsAccount(

@@ -5,25 +5,17 @@ import dev.bootcamp.accountservice.application.port.DebitCardRepository;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Single;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Regla para asociar una cuenta a una tarjeta de débito: la cuenta debe existir, ser del cliente y
  * no estar asociada a ninguna otra tarjeta (una cuenta, una tarjeta).
  */
+@RequiredArgsConstructor
 public class DebitCardAccountRule {
 
     private final BankAccountRepository bankAccountRepository;
     private final DebitCardRepository debitCardRepository;
-
-    /**
-     * Crea la regla con los adaptadores de cuentas y tarjetas.
-     */
-    public DebitCardAccountRule(
-            BankAccountRepository bankAccountRepository,
-            DebitCardRepository debitCardRepository) {
-        this.bankAccountRepository = bankAccountRepository;
-        this.debitCardRepository = debitCardRepository;
-    }
 
     /**
      * Verifica que la cuenta se pueda asociar a una tarjeta del cliente.
