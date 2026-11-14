@@ -52,6 +52,11 @@ public class CheckingAccount extends BankAccount {
         changes.allowOnly(
                 "corriente",
                 Set.of("maintenanceFee", "holderIds", "authorizedSignerIds"));
+        // Al modificar, la comisión siempre se envía: 0 en la cuenta PYME.
+        if (changes.maintenanceFee() == null) {
+            throw new BusinessRuleException(
+                    "El campo maintenanceFee es obligatorio (0 si el cliente es PYME)");
+        }
         return keepStateIn(new CheckingAccount(
                 getCustomer(),
                 getOpening(),
