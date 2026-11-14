@@ -28,4 +28,44 @@ public abstract class BankAccount {
      * de cuenta al momento de abrirla.
      */
     @Setter private TransactionFee transactionFee;
+
+    /**
+     * Fecha de baja; null mientras la cuenta está activa.
+     */
+    @Setter private LocalDate closedAt;
+
+    /**
+     * Indica si la cuenta fue dada de baja.
+     */
+    public boolean isClosed() {
+        return closedAt != null;
+    }
+
+    /**
+     * Da de baja la cuenta (baja lógica: conserva sus datos y su historial de movimientos).
+     */
+    public void close(LocalDate today) {
+        this.closedAt = today;
+    }
+
+    /**
+     * Crea una cuenta del mismo tipo con las nuevas condiciones, validadas con las mismas reglas
+     * que al abrirla. Conserva el id, el cliente, la apertura, la comisión por transacción y la
+     * fecha de baja.
+     *
+     * @throws dev.bootcamp.accountservice.domain.exception.BusinessRuleException si falta un campo
+     *     obligatorio del tipo, viene uno de otro tipo o el nuevo valor incumple una regla
+     */
+    public abstract BankAccount withChanges(AccountChanges changes);
+
+    /**
+     * Copia a la cuenta modificada el estado que no cambia.
+     */
+    protected <T extends BankAccount> T keepStateIn(T updated) {
+        updated.setId(id);
+        updated.setOpenedAt(openedAt);
+        updated.setTransactionFee(transactionFee);
+        updated.setClosedAt(closedAt);
+        return updated;
+    }
 }

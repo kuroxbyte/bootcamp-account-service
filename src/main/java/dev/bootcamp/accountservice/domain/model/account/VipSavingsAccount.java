@@ -6,6 +6,7 @@ import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.util.Set;
 
 /**
  * Ahorro VIP: cuenta de ahorro que requiere un monto mínimo de promedio diario cada mes. El
@@ -35,5 +36,17 @@ public class VipSavingsAccount extends SavingsAccount {
                     "El monto mínimo de promedio diario no puede ser negativo");
         }
         this.minimumDailyAverage = minimumDailyAverage;
+    }
+
+    @Override
+    public VipSavingsAccount withChanges(AccountChanges changes) {
+        changes.allowOnly(
+                "de ahorro VIP",
+                Set.of("maxMonthlyMovements", "minimumDailyAverage"));
+        return keepStateIn(new VipSavingsAccount(
+                getCustomer(),
+                getOpening(),
+                AccountChanges.required(changes.maxMonthlyMovements(), "maxMonthlyMovements"),
+                changes.minimumDailyAverage()));
     }
 }

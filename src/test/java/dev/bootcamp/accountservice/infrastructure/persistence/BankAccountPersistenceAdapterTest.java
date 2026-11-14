@@ -168,4 +168,21 @@ class BankAccountPersistenceAdapterTest {
 
         adapter.findAll().test().awaitDone(5, TimeUnit.SECONDS).assertValueCount(2);
     }
+
+    @Test
+    void closedAccountsKeepTheirDateAndLeaveTheCustomerList() {
+        SavingsAccount closed = adapter.save(
+                new SavingsAccount(PERSONAL, TestOpenings.NONE, 5)).blockingGet();
+        closed.close(LocalDate.of(2026, 12, 1));
+        adapter.save(closed).blockingGet();
+        adapter.save(new FixedTermAccount(PERSONAL, TestOpenings.NONE, 10)).blockingGet();
+
+        assertThat(adapter.findByCustomerId("c1").toList().blockingGet())
+                .extracting(BankAccount::getClosedAt)
+                .containsOnlyNulls()
+                .hasSize(1);
+        assertThat(adapter.findById(closed.getId()).blockingGet().getClosedAt())
+                .isEqualTo(LocalDate.of(2026, 12, 1));
+        assertThat(adapter.findAll().toList().blockingGet()).hasSize(2);
+    }
 }

@@ -148,7 +148,7 @@ paths:
       tags: [Accounts]
       operationId: getAccountById
       summary: Consultar una cuenta
-      description: Uso interno; transaction-service lo usa para validar al dueño y las reglas de movimientos.
+      description: Uso interno; transaction-service lo usa para validar al dueño y las reglas de movimientos. Una cuenta dada de baja responde 404, así no acepta movimientos.
       parameters:
         - $ref: '#/components/parameters/AccountId'
       responses:
@@ -160,6 +160,62 @@ paths:
                 $ref: '#/components/schemas/AccountResponse'
         '404':
           $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Accounts]
+      operationId: updateAccount
+      summary: Modificar las condiciones de una cuenta
+      description: >-
+        Solo para empleados (rol ADMIN). Reemplaza las condiciones modificables según el tipo de
+        cuenta, con las mismas reglas que al abrirla. Corriente: maintenanceFee (0 o ausente si es
+        PYME), holderIds (al menos uno si es empresarial) y authorizedSignerIds. Ahorro:
+        maxMonthlyMovements, y minimumDailyAverage si es VIP. Plazo fijo: movementDayOfMonth.
+        Enviar un campo de otro tipo de cuenta responde 422. El cliente, el tipo y la apertura no
+        cambian.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/XAdminId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountUpdateRequest'
+      responses:
+        '200':
+          description: Cuenta modificada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+    delete:
+      tags: [Accounts]
+      operationId: deleteAccount
+      summary: Dar de baja una cuenta
+      description: >-
+        Solo para empleados. Baja lógica: la cuenta guarda su fecha de baja y su historial de
+        movimientos en transaction-service; deja de listarse y de aceptar movimientos. Solo se da de
+        baja una cuenta con saldo 0 (se consulta transaction-service) y sin tarjeta de débito
+        activa.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/XAdminId'
+      responses:
+        '204':
+          description: Cuenta dada de baja
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/BusinessRuleViolation'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
   /api/v1/debit-cards:
     post:
       tags: [DebitCards]
@@ -214,6 +270,24 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DebitCardResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [DebitCards]
+      operationId: deleteDebitCard
+      summary: Dar de baja una tarjeta de débito
+      description: >-
+        Solo para empleados. Baja lógica: la tarjeta guarda su fecha de baja y sus cuentas quedan
+        libres para otra tarjeta. Publica DebitCardClosed: transaction-service deja de aceptar pagos
+        con ella y yanki-service la desasocia del monedero que la use.
+      parameters:
+        - $ref: '#/components/parameters/DebitCardId'
+        - $ref: '#/components/parameters/XAdminId'
+      responses:
+        '204':
+          description: Tarjeta dada de baja
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -281,6 +355,13 @@ components:
       description: Id del cliente que realiza la operación. Lo establece el API Gateway con el claim sub del JWT; el valor que envía el cliente se descarta
       schema:
         type: string
+    XAdminId:
+      name: X-Admin-Id
+      in: header
+      required: true
+      description: Usuario del empleado; lo envía el API Gateway con el claim sub de un token ADMIN
+      schema:
+        type: string
     AccountId:
       name: accountId
       in: path
@@ -325,6 +406,38 @@ components:
         issuedAt:
           type: string
           format: date
+    AccountUpdateRequest:
+      type: object
+      description: Condiciones modificables; cada tipo de cuenta usa solo las suyas.
+      properties:
+        maintenanceFee:
+          type: number
+          description: Solo CHECKING
+          example: 12.00
+        holderIds:
+          type: array
+          description: Solo CHECKING
+          items:
+            type: string
+        authorizedSignerIds:
+          type: array
+          description: Solo CHECKING
+          items:
+            type: string
+        maxMonthlyMovements:
+          type: integer
+          format: int32
+          description: Solo SAVINGS
+          example: 8
+        minimumDailyAverage:
+          type: number
+          description: Solo SAVINGS de un cliente VIP
+          example: 600
+        movementDayOfMonth:
+          type: integer
+          format: int32
+          description: Solo FIXED_TERM
+          example: 20
     AccountType:
       type: string
       description: Tipo de cuenta bancaria
@@ -444,6 +557,11 @@ components:
           type: number
           description: Comisión fija por cada depósito o retiro que supera las transacciones sin comisión del mes
           example: 2.00
+        closedAt:
+          type: string
+          format: date
+          description: Fecha de baja; solo la tienen las cuentas dadas de baja, que únicamente aparecen en el listado interno
+          example: '2026-12-01'
     Problem:
       type: object
       description: Detalle de error (RFC 7807)
@@ -499,7 +617,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     ServiceUnavailable:
-      description: customer-service o credit-service no está disponible
+      description: customer-service, credit-service o transaction-service no está disponible
       content:
         application/problem+json:
           schema:

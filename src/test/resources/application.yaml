@@ -25,6 +25,8 @@ clients:
     timeout: 3s
   credit-service:
     base-url: http://credit-service
+  transaction-service:
+    base-url: http://transaction-service
 
 accounts:
   vip-savings:

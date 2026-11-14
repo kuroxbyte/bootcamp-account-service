@@ -1,5 +1,6 @@
 package dev.bootcamp.accountservice.infrastructure.config;
 
+import dev.bootcamp.accountservice.application.port.AccountBalanceClient;
 import dev.bootcamp.accountservice.application.port.BankAccountRepository;
 import dev.bootcamp.accountservice.application.port.CreditCardClient;
 import dev.bootcamp.accountservice.application.port.CustomerClient;
@@ -8,6 +9,8 @@ import dev.bootcamp.accountservice.application.port.DebitCardEventPublisher;
 import dev.bootcamp.accountservice.application.port.DebitCardRepository;
 import dev.bootcamp.accountservice.application.rule.DebitCardAccountRule;
 import dev.bootcamp.accountservice.application.rule.OverdueDebtRule;
+import dev.bootcamp.accountservice.application.usecase.CloseDebitCardUseCase;
+import dev.bootcamp.accountservice.application.usecase.CloseDebitCardUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
@@ -16,6 +19,8 @@ import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCase;
 import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCaseImpl;
+import dev.bootcamp.accountservice.application.usecase.UpdateBankAccountUseCase;
+import dev.bootcamp.accountservice.application.usecase.UpdateBankAccountUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCase;
 import dev.bootcamp.accountservice.application.usecase.UpdateCustomerDebtStatusUseCaseImpl;
 import dev.bootcamp.accountservice.application.usecase.UpdateDebitCardAccountsUseCase;
@@ -176,5 +181,32 @@ public class UseCaseConfig {
                 debitCardRepository,
                 debitCardAccountRule,
                 debitCardEventPublisher);
+    }
+
+    /**
+     * Registra el caso de uso {@link UpdateBankAccountUseCase}.
+     */
+    @Bean
+    public UpdateBankAccountUseCase updateBankAccountUseCase(
+            BankAccountRepository bankAccountRepository,
+            DebitCardRepository debitCardRepository,
+            AccountBalanceClient accountBalanceClient,
+            Clock clock) {
+        return new UpdateBankAccountUseCaseImpl(
+                bankAccountRepository,
+                debitCardRepository,
+                accountBalanceClient,
+                clock);
+    }
+
+    /**
+     * Registra el caso de uso {@link CloseDebitCardUseCase}.
+     */
+    @Bean
+    public CloseDebitCardUseCase closeDebitCardUseCase(
+            DebitCardRepository debitCardRepository,
+            DebitCardEventPublisher debitCardEventPublisher,
+            Clock clock) {
+        return new CloseDebitCardUseCaseImpl(debitCardRepository, debitCardEventPublisher, clock);
     }
 }

@@ -21,13 +21,25 @@ public class GetBankAccountsUseCaseImpl implements GetBankAccountsUseCase {
 
     @Override
     public Single<BankAccount> findById(String accountId) {
-        return bankAccountRepository
-                .findById(accountId)
-                .switchIfEmpty(Single.error(() -> new NotFoundException("La cuenta no existe")));
+        return findActive(bankAccountRepository, accountId);
     }
 
     @Override
     public Flowable<BankAccount> findAll() {
         return bankAccountRepository.findAll();
+    }
+
+    /**
+     * Busca una cuenta activa.
+     *
+     * @return la cuenta; error {@link NotFoundException} si no existe o fue dada de baja
+     */
+    static Single<BankAccount> findActive(
+            BankAccountRepository bankAccountRepository,
+            String accountId) {
+        return bankAccountRepository
+                .findById(accountId)
+                .filter(account -> !account.isClosed())
+                .switchIfEmpty(Single.error(() -> new NotFoundException("La cuenta no existe")));
     }
 }

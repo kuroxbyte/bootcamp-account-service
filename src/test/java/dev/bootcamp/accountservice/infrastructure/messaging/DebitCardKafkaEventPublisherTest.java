@@ -73,4 +73,17 @@ class DebitCardKafkaEventPublisherTest {
         publisher.publishAccountsUpdated(card).test().awaitDone(2, TimeUnit.SECONDS)
                 .assertComplete();
     }
+
+    @Test
+    void publishesDebitCardClosed() {
+        when(kafkaTemplate.send(eq("debit-card-events"), eq("c1"), anyString()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
+        publisher.publishClosed(card).test().awaitDone(2, TimeUnit.SECONDS).assertComplete();
+
+        ArgumentCaptor<String> json = ArgumentCaptor.forClass(String.class);
+        verify(kafkaTemplate).send(eq("debit-card-events"), eq("c1"), json.capture());
+        assertThat(jsonMapper.readTree(json.getValue()).get("eventType").asString())
+                .isEqualTo("DebitCardClosed");
+    }
 }

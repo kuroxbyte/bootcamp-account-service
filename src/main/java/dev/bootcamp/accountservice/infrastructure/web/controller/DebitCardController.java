@@ -1,5 +1,6 @@
 package dev.bootcamp.accountservice.infrastructure.web.controller;
 
+import dev.bootcamp.accountservice.application.usecase.CloseDebitCardUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCase;
 import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCase;
 import dev.bootcamp.accountservice.application.usecase.UpdateDebitCardAccountsUseCase;
@@ -29,6 +30,7 @@ public class DebitCardController implements DebitCardsApi {
     private final IssueDebitCardUseCase issueDebitCardUseCase;
     private final GetDebitCardsUseCase getDebitCardsUseCase;
     private final UpdateDebitCardAccountsUseCase updateDebitCardAccountsUseCase;
+    private final CloseDebitCardUseCase closeDebitCardUseCase;
 
     @Override
     public Mono<ResponseEntity<DebitCardResponseDto>> issueDebitCard(
@@ -92,6 +94,18 @@ public class DebitCardController implements DebitCardsApi {
                         debitCardId,
                         request.getAccountId())))
                 .map(card -> ResponseEntity.ok(toResponse(card)));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteDebitCard(
+            String debitCardId,
+            String adminId,
+            ServerWebExchange exchange) {
+        return Mono.from(closeDebitCardUseCase.execute(debitCardId).toFlowable())
+                .then(Mono.fromCallable(() -> {
+                    log.info("Debit card closed debitCardId={} adminId={}", debitCardId, adminId);
+                    return ResponseEntity.noContent().<Void>build();
+                }));
     }
 
     private static Mono<DebitCard> toMono(Single<DebitCard> card) {

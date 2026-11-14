@@ -19,12 +19,15 @@ public class DebitCardPersistenceAdapter implements DebitCardRepository {
 
     @Override
     public Single<DebitCard> save(DebitCard debitCard) {
+        boolean closed = debitCard.isClosed();
         return Single.fromPublisher(mongoRepository.save(new DebitCardDocument(
                         debitCard.getId(),
                         debitCard.getCustomerId(),
                         debitCard.getPrimaryAccountId(),
-                        debitCard.getAccountIds(),
-                        debitCard.getIssuedAt())))
+                        closed ? null : debitCard.getAccountIds(),
+                        debitCard.getIssuedAt(),
+                        debitCard.getClosedAt(),
+                        closed ? debitCard.getAccountIds() : null)))
                 .map(DebitCardPersistenceAdapter::toDomain);
     }
 
@@ -36,7 +39,7 @@ public class DebitCardPersistenceAdapter implements DebitCardRepository {
 
     @Override
     public Flowable<DebitCard> findByCustomerId(String customerId) {
-        return Flowable.fromPublisher(mongoRepository.findByCustomerId(customerId))
+        return Flowable.fromPublisher(mongoRepository.findByCustomerIdAndClosedAtIsNull(customerId))
                 .map(DebitCardPersistenceAdapter::toDomain);
     }
 
@@ -46,11 +49,15 @@ public class DebitCardPersistenceAdapter implements DebitCardRepository {
     }
 
     private static DebitCard toDomain(DebitCardDocument document) {
-        return DebitCard.restore(
+        DebitCard card = DebitCard.restore(
                 document.getId(),
                 document.getCustomerId(),
                 document.getPrimaryAccountId(),
-                document.getAccountIds(),
+                document.getClosedAt() == null
+                        ? document.getAccountIds()
+                        : document.getClosedAccountIds(),
                 document.getIssuedAt());
+        card.setClosedAt(document.getClosedAt());
+        return card;
     }
 }

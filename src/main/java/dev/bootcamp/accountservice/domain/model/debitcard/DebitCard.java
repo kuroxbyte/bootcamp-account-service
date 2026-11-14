@@ -27,6 +27,11 @@ public class DebitCard {
     @Setter private LocalDate issuedAt;
 
     /**
+     * Fecha de baja; null mientras la tarjeta está activa.
+     */
+    @Setter private LocalDate closedAt;
+
+    /**
      * Crea la tarjeta con su cuenta principal y otras cuentas asociadas.
      *
      * @param customerId       cliente dueño
@@ -74,6 +79,20 @@ public class DebitCard {
      */
     public List<String> getAccountIds() {
         return List.copyOf(accountIds);
+    }
+
+    /**
+     * Indica si la tarjeta fue dada de baja.
+     */
+    public boolean isClosed() {
+        return closedAt != null;
+    }
+
+    /**
+     * Da de baja la tarjeta: sus cuentas quedan libres para asociarse a otra tarjeta.
+     */
+    public void close(LocalDate today) {
+        this.closedAt = today;
     }
 
     /**

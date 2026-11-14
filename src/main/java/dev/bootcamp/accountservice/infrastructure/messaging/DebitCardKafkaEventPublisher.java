@@ -59,6 +59,11 @@ public class DebitCardKafkaEventPublisher implements DebitCardEventPublisher {
         return publish("DebitCardAccountsUpdated", debitCard);
     }
 
+    @Override
+    public Completable publishClosed(DebitCard debitCard) {
+        return publish("DebitCardClosed", debitCard);
+    }
+
     private Completable publish(String eventType, DebitCard debitCard) {
         return Completable.defer(() -> {
             Map<String, Object> event = new LinkedHashMap<>();

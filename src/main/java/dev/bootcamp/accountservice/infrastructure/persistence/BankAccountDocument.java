@@ -66,4 +66,9 @@ public class BankAccountDocument {
 
     @Field(targetType = FieldType.DECIMAL128)
     private final BigDecimal transactionFee;
+
+    /**
+     * Fecha de baja; no se guarda mientras la cuenta está activa.
+     */
+    private final LocalDate closedAt;
 }

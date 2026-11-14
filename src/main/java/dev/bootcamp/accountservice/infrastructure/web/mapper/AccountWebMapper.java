@@ -29,6 +29,7 @@ public final class AccountWebMapper {
                         .freeMonthlyTransactions(
                                 account.getTransactionFee().freeMonthlyTransactions())
                         .transactionFee(account.getTransactionFee().amount())
+                        .closedAt(account.getClosedAt())
                         .holderIds(null)
                         .authorizedSignerIds(null);
         if (account instanceof VipSavingsAccount vipSavings) {

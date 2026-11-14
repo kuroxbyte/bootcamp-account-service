@@ -11,8 +11,11 @@ import java.util.List;
 
 /**
  * Tarjeta de débito tal como se guarda en la colección {@code debit_cards}. El índice único sobre
- * {@code accountIds} impide asociar una misma cuenta a dos tarjetas aunque lleguen dos pedidos a la
- * vez.
+ * {@code accountIds} impide asociar una misma cuenta a dos tarjetas activas aunque lleguen dos
+ * pedidos a la vez.
+ *
+ * <p>Una tarjeta dada de baja guarda sus cuentas en {@code closedAccountIds} y no tiene
+ * {@code accountIds}: el índice es disperso ({@code sparse}), así sus cuentas quedan libres.
  */
 @Getter
 @AllArgsConstructor
@@ -23,9 +26,19 @@ public class DebitCardDocument {
     private final String primaryAccountId;
 
     /**
-     * Cuentas asociadas, empezando por la principal.
+     * Cuentas asociadas, empezando por la principal; null si la tarjeta fue dada de baja.
      */
-    @Indexed(unique = true) private final List<String> accountIds;
+    @Indexed(unique = true, sparse = true) private final List<String> accountIds;
 
     private final LocalDate issuedAt;
+
+    /**
+     * Fecha de baja; null mientras la tarjeta está activa.
+     */
+    private final LocalDate closedAt;
+
+    /**
+     * Cuentas que tenía la tarjeta al darse de baja.
+     */
+    private final List<String> closedAccountIds;
 }

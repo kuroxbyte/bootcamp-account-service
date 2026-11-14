@@ -30,7 +30,8 @@ final class BankAccountPersistenceMapper {
                         .customerProfile(account.getCustomer().profile().name())
                         .minimumOpeningAmount(account.getOpening().minimum())
                         .openingAmount(account.getOpening().amount())
-                        .openedAt(account.getOpenedAt());
+                        .openedAt(account.getOpenedAt())
+                        .closedAt(account.getClosedAt());
         if (account.getTransactionFee() != null) {
             document.freeMonthlyTransactions(account.getTransactionFee().freeMonthlyTransactions())
                     .transactionFee(account.getTransactionFee().amount());
@@ -93,6 +94,7 @@ final class BankAccountPersistenceMapper {
         };
         account.setId(document.getId());
         account.setOpenedAt(document.getOpenedAt());
+        account.setClosedAt(document.getClosedAt());
         if (document.getTransactionFee() != null) {
             account.setTransactionFee(new TransactionFee(
                     document.getFreeMonthlyTransactions(),

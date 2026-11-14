@@ -8,8 +8,8 @@ import io.reactivex.rxjava3.core.Single;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Regla para asociar una cuenta a una tarjeta de débito: la cuenta debe existir, ser del cliente y
- * no estar asociada a ninguna otra tarjeta (una cuenta, una tarjeta).
+ * Regla para asociar una cuenta a una tarjeta de débito: la cuenta debe existir, estar activa, ser
+ * del cliente y no estar asociada a ninguna otra tarjeta activa (una cuenta, una tarjeta).
  */
 @RequiredArgsConstructor
 public class DebitCardAccountRule {
@@ -25,7 +25,8 @@ public class DebitCardAccountRule {
      */
     public Completable verify(String customerId, String accountId) {
         return bankAccountRepository.findById(accountId)
-                .filter(account -> account.getCustomer().id().equals(customerId))
+                .filter(account -> !account.isClosed()
+                        && account.getCustomer().id().equals(customerId))
                 .switchIfEmpty(Single.error(() -> new BusinessRuleException(
                         "La cuenta " + accountId + " no existe o no es del cliente")))
                 .flatMapCompletable(account -> debitCardRepository.existsByAccountId(accountId)
