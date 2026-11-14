@@ -117,4 +117,22 @@ class AccountChangesTest {
         assertThat(account.withChanges(savings(5)).getClosedAt())
                 .isEqualTo(LocalDate.of(2026, 12, 1));
     }
+
+    @Test
+    void pymeCheckingRequiresMaintenanceFeeOfZero() {
+        Customer pyme = new Customer("c4", CustomerType.BUSINESS, CustomerProfile.PYME);
+        CheckingAccount account = opened(new CheckingAccount(
+                pyme, TestOpenings.NONE, null, List.of("h1"), List.of()));
+
+        assertThatThrownBy(() -> account.withChanges(new AccountChanges(
+                null, List.of("h1"), List.of(), null, null, null)))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessageContaining("maintenanceFee");
+        assertThatThrownBy(() -> account.withChanges(new AccountChanges(
+                BigDecimal.TEN, List.of("h1"), List.of(), null, null, null)))
+                .isInstanceOf(BusinessRuleException.class);
+        assertThat(account.withChanges(new AccountChanges(
+                BigDecimal.ZERO, List.of("h1", "h2"), List.of(), null, null, null))
+                .getHolderIds()).containsExactly("h1", "h2");
+    }
 }

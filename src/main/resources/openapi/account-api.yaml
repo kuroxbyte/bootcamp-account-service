@@ -166,7 +166,7 @@ paths:
       summary: Modificar las condiciones de una cuenta
       description: >-
         Solo para empleados (rol ADMIN). Reemplaza las condiciones modificables según el tipo de
-        cuenta, con las mismas reglas que al abrirla. Corriente: maintenanceFee (0 o ausente si es
+        cuenta, con las mismas reglas que al abrirla. Corriente: maintenanceFee (obligatorio; 0 si es
         PYME), holderIds (al menos uno si es empresarial) y authorizedSignerIds. Ahorro:
         maxMonthlyMovements, y minimumDailyAverage si es VIP. Plazo fijo: movementDayOfMonth.
         Enviar un campo de otro tipo de cuenta responde 422. El cliente, el tipo y la apertura no
@@ -412,7 +412,7 @@ components:
       properties:
         maintenanceFee:
           type: number
-          description: Solo CHECKING
+          description: Solo CHECKING, obligatorio; 0 si el cliente es PYME
           example: 12.00
         holderIds:
           type: array
