@@ -22,11 +22,12 @@ import java.util.stream.StreamSupport;
 /**
  * Pone los índices de MongoDB al día con las anotaciones {@code @Indexed} de los documentos.
  *
- * <p>La creación automática de índices no modifica un índice que ya existe con otras opciones
- * (por ejemplo, el índice único de {@code debit_cards.accountIds}, que ahora es disperso): MongoDB
- * rechaza crearlo y el índice viejo sigue vigente. Al arrancar, este componente compara cada índice
- * declarado con el existente del mismo nombre; si difieren en {@code unique} o {@code sparse},
- * borra el viejo y crea el nuevo. Los índices que faltan se crean.
+ * <p>En este servicio es la única que crea los índices: la creación automática de Spring está
+ * desactivada en config-repo porque no modifica un índice que ya existe con otras opciones (por
+ * ejemplo, el índice único de {@code debit_cards.accountIds}, que ahora es disperso) y
+ * registraría un error. Al arrancar, compara cada índice declarado con el existente del mismo
+ * nombre; si difieren en {@code unique} o {@code sparse}, borra el viejo y crea el nuevo. Los
+ * índices que faltan se crean.
  *
  * <p>Corre en segundo plano y nunca impide el arranque: un error se registra.
  */
@@ -42,7 +43,7 @@ public class IndexMigration {
      * Crea la migración con el resolutor de índices del contexto de mapeo de MongoDB.
      *
      * @param onStartup si migra al arrancar ({@code mongodb.index-migration.on-startup}, true por
-     *     defecto)
+     *                  defecto)
      */
     public IndexMigration(
             ReactiveMongoTemplate mongoTemplate,
@@ -62,7 +63,8 @@ public class IndexMigration {
             return;
         }
         migrateAll().subscribe(
-                migrated -> { },
+                migrated -> {
+                },
                 error -> log.error("Index migration failed", error));
     }
 
@@ -115,7 +117,7 @@ public class IndexMigration {
         log.warn("Recreating index {} with its new options {}", name,
                 definition.getIndexOptions().toJson());
         return operations.dropIndex(name)
-                .then(operations.ensureIndex(definition))
+                .then(operations.createIndex(definition))
                 .thenReturn(1L);
     }
 
