@@ -9,7 +9,7 @@ import reactor.core.publisher.Flux;
 public interface BankAccountMongoRepository
         extends ReactiveMongoRepository<BankAccountDocument, String> {
     /**
-     * Busca los productos del cliente.
+     * Busca las cuentas activas (sin fecha de baja) del cliente.
      */
-    Flux<BankAccountDocument> findByCustomerId(String customerId);
+    Flux<BankAccountDocument> findByCustomerIdAndClosedAtIsNull(String customerId);
 }

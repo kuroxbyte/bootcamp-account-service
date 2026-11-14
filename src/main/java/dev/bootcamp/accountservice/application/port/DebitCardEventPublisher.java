@@ -23,4 +23,11 @@ public interface DebitCardEventPublisher {
      * @return termina cuando se publicó, o sin error si no se pudo (el adaptador lo registra)
      */
     Completable publishAccountsUpdated(DebitCard debitCard);
+
+    /**
+     * Publica que se dio de baja una tarjeta, con su último estado.
+     *
+     * @return termina cuando se publicó, o sin error si no se pudo (el adaptador lo registra)
+     */
+    Completable publishClosed(DebitCard debitCard);
 }

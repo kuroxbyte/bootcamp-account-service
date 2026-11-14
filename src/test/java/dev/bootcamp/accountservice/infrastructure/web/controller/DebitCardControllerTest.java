@@ -1,11 +1,13 @@
 package dev.bootcamp.accountservice.infrastructure.web.controller;
 
+import dev.bootcamp.accountservice.application.usecase.CloseDebitCardUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetDebitCardsUseCase;
 import dev.bootcamp.accountservice.application.usecase.IssueDebitCardUseCase;
 import dev.bootcamp.accountservice.application.usecase.UpdateDebitCardAccountsUseCase;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
 import dev.bootcamp.accountservice.domain.model.debitcard.DebitCard;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,8 @@ class DebitCardControllerTest {
     @MockitoBean private GetDebitCardsUseCase getDebitCardsUseCase;
 
     @MockitoBean private UpdateDebitCardAccountsUseCase updateDebitCardAccountsUseCase;
+
+    @MockitoBean private CloseDebitCardUseCase closeDebitCardUseCase;
 
     private static DebitCard card(String primary, String... others) {
         DebitCard card = new DebitCard("c1", primary, List.of(others));
@@ -127,5 +131,17 @@ class DebitCardControllerTest {
         send("PUT", "/api/v1/debit-cards/d1/primary-account", "{\"accountId\":\"a2\"}")
                 .expectStatus().isOk()
                 .expectBody().jsonPath("$.primaryAccountId").isEqualTo("a2");
+    }
+
+    @Test
+    void closesCardForAdmin() {
+        when(closeDebitCardUseCase.execute("d1")).thenReturn(Completable.complete());
+        when(closeDebitCardUseCase.execute("d9"))
+                .thenReturn(Completable.error(new NotFoundException("No existe")));
+
+        webTestClient.delete().uri("/api/v1/debit-cards/d1").header("X-Admin-Id", "admin")
+                .exchange().expectStatus().isNoContent();
+        webTestClient.delete().uri("/api/v1/debit-cards/d9").header("X-Admin-Id", "admin")
+                .exchange().expectStatus().isNotFound();
     }
 }

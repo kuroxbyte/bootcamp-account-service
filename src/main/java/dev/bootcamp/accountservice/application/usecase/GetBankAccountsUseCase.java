@@ -24,12 +24,13 @@ public interface GetBankAccountsUseCase {
      * Consulta una cuenta por su id.
      *
      * @param accountId id de la cuenta
-     * @return la cuenta; error {@link NotFoundException} si no existe
+     * @return la cuenta; error {@link NotFoundException} si no existe o fue dada de baja
      */
     Single<BankAccount> findById(String accountId);
 
     /**
-     * Lista todas las cuentas del banco; lo usa transaction-service para los reportes.
+     * Lista todas las cuentas del banco, también las dadas de baja (con su fecha de baja); lo usa
+     * transaction-service para los reportes y las comisiones mensuales.
      *
      * @return todas las cuentas; ninguna si el banco no tiene cuentas
      */

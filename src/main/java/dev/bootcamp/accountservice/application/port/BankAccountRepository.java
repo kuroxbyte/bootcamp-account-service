@@ -11,7 +11,7 @@ import io.reactivex.rxjava3.core.Single;
 public interface BankAccountRepository {
 
     /**
-     * Busca el recurso por su id.
+     * Busca la cuenta por su id, aunque esté dada de baja.
      *
      * @return la cuenta, o vacío si no existe
      */
@@ -20,12 +20,12 @@ public interface BankAccountRepository {
     /**
      * Busca los productos del cliente.
      *
-     * @return las cuentas del cliente (ninguna si no tiene)
+     * @return las cuentas activas del cliente (ninguna si no tiene)
      */
     Flowable<BankAccount> findByCustomerId(String customerId);
 
     /**
-     * Todas las cuentas del banco.
+     * Todas las cuentas del banco, también las dadas de baja.
      */
     Flowable<BankAccount> findAll();
 

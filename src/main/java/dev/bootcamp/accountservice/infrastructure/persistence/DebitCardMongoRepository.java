@@ -11,13 +11,13 @@ public interface DebitCardMongoRepository
         extends ReactiveMongoRepository<DebitCardDocument, String> {
 
     /**
-     * Tarjetas del cliente.
+     * Tarjetas activas (sin fecha de baja) del cliente.
      */
-    Flux<DebitCardDocument> findByCustomerId(String customerId);
+    Flux<DebitCardDocument> findByCustomerIdAndClosedAtIsNull(String customerId);
 
     /**
-     * Indica si alguna tarjeta tiene asociada la cuenta; MongoDB busca el valor dentro de la
-     * lista {@code accountIds}.
+     * Indica si alguna tarjeta activa tiene asociada la cuenta; MongoDB busca el valor dentro de la
+     * lista {@code accountIds}, que las tarjetas dadas de baja no tienen.
      */
     Mono<Boolean> existsByAccountIds(String accountId);
 }

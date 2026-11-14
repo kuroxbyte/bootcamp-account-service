@@ -2,9 +2,12 @@ package dev.bootcamp.accountservice.infrastructure.web.controller;
 
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
+import dev.bootcamp.accountservice.application.usecase.UpdateBankAccountUseCase;
+import dev.bootcamp.accountservice.domain.model.account.AccountChanges;
 import dev.bootcamp.accountservice.domain.model.account.BankAccount;
 import dev.bootcamp.accountservice.infrastructure.web.api.AccountsApi;
 import dev.bootcamp.accountservice.infrastructure.web.dto.AccountResponseDto;
+import dev.bootcamp.accountservice.infrastructure.web.dto.AccountUpdateRequestDto;
 import dev.bootcamp.accountservice.infrastructure.web.dto.CheckingAccountRequestDto;
 import dev.bootcamp.accountservice.infrastructure.web.dto.FixedTermAccountRequestDto;
 import dev.bootcamp.accountservice.infrastructure.web.dto.SavingsAccountRequestDto;
@@ -29,6 +32,7 @@ public class AccountController implements AccountsApi {
 
     private final CreateBankAccountUseCase createBankAccountUseCase;
     private final GetBankAccountsUseCase getBankAccountsUseCase;
+    private final UpdateBankAccountUseCase updateBankAccountUseCase;
 
     @Override
     public Mono<ResponseEntity<Flux<AccountResponseDto>>> listAccounts(
@@ -100,6 +104,39 @@ public class AccountController implements AccountsApi {
                                         customerId,
                                         request.getMovementDayOfMonth(),
                                         request.getOpeningAmount())));
+    }
+
+    @Override
+    public Mono<ResponseEntity<AccountResponseDto>> updateAccount(
+            String accountId,
+            String adminId,
+            Mono<AccountUpdateRequestDto> accountUpdateRequestDto,
+            ServerWebExchange exchange) {
+        return accountUpdateRequestDto
+                .flatMap(request -> Mono.from(updateBankAccountUseCase
+                        .update(accountId, new AccountChanges(
+                                request.getMaintenanceFee(),
+                                request.getHolderIds(),
+                                request.getAuthorizedSignerIds(),
+                                request.getMaxMonthlyMovements(),
+                                request.getMinimumDailyAverage(),
+                                request.getMovementDayOfMonth()))
+                        .toFlowable()))
+                .doOnNext(account -> log.info(
+                        "Account updated accountId={} adminId={}", accountId, adminId))
+                .map(account -> ResponseEntity.ok(AccountWebMapper.toResponse(account)));
+    }
+
+    @Override
+    public Mono<ResponseEntity<Void>> deleteAccount(
+            String accountId,
+            String adminId,
+            ServerWebExchange exchange) {
+        return Mono.from(updateBankAccountUseCase.close(accountId).toFlowable())
+                .then(Mono.fromCallable(() -> {
+                    log.info("Account closed accountId={} adminId={}", accountId, adminId);
+                    return ResponseEntity.noContent().<Void>build();
+                }));
     }
 
     private static Mono<ResponseEntity<AccountResponseDto>> created(

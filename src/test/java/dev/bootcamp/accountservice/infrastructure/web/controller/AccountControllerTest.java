@@ -2,8 +2,10 @@ package dev.bootcamp.accountservice.infrastructure.web.controller;
 
 import dev.bootcamp.accountservice.application.usecase.CreateBankAccountUseCase;
 import dev.bootcamp.accountservice.application.usecase.GetBankAccountsUseCase;
+import dev.bootcamp.accountservice.application.usecase.UpdateBankAccountUseCase;
 import dev.bootcamp.accountservice.domain.exception.BusinessRuleException;
 import dev.bootcamp.accountservice.domain.exception.NotFoundException;
+import dev.bootcamp.accountservice.domain.model.account.AccountChanges;
 import dev.bootcamp.accountservice.domain.model.account.CheckingAccount;
 import dev.bootcamp.accountservice.domain.model.account.FixedTermAccount;
 import dev.bootcamp.accountservice.domain.model.account.OpeningAmount;
@@ -15,6 +17,7 @@ import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerProfile;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import dev.bootcamp.accountservice.infrastructure.client.ServiceUnavailableException;
+import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 import org.junit.jupiter.api.Test;
@@ -54,6 +57,8 @@ class AccountControllerTest {
     @MockitoBean private CreateBankAccountUseCase createBankAccountUseCase;
 
     @MockitoBean private GetBankAccountsUseCase getBankAccountsUseCase;
+
+    @MockitoBean private UpdateBankAccountUseCase updateBankAccountUseCase;
 
     private static SavingsAccount savings() {
         SavingsAccount account = new SavingsAccount(PERSONAL, TestOpenings.NONE, 5);
@@ -363,5 +368,55 @@ class AccountControllerTest {
                 .expectBody()
                 .jsonPath("$.detail")
                 .isEqualTo("customer-service no está disponible");
+    }
+
+    @Test
+    void updatesAccountConditionsForAdmin() {
+        // El contrato envía las listas no informadas como listas vacías.
+        AccountChanges changes = new AccountChanges(null, List.of(), List.of(), 8, null, null);
+        when(updateBankAccountUseCase.update("10", changes)).thenReturn(Single.just(savings()));
+
+        webTestClient.put().uri("/api/v1/accounts/10")
+                .header("X-Admin-Id", "admin")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"maxMonthlyMovements\":8}")
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody().jsonPath("$.id").isEqualTo("10");
+        webTestClient.put().uri("/api/v1/accounts/10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"maxMonthlyMovements\":8}")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
+    @Test
+    void closesAccountOrExplainsWhyNot() {
+        when(updateBankAccountUseCase.close("10")).thenReturn(Completable.complete());
+        when(updateBankAccountUseCase.close("11"))
+                .thenReturn(Completable.error(new BusinessRuleException("Tiene saldo")));
+        when(updateBankAccountUseCase.close("12"))
+                .thenReturn(Completable.error(new NotFoundException("La cuenta no existe")));
+
+        deleteAccount("10").expectStatus().isNoContent();
+        deleteAccount("11").expectStatus().isEqualTo(422);
+        deleteAccount("12").expectStatus().isNotFound();
+    }
+
+    @Test
+    void showsClosingDateInTheInternalList() {
+        SavingsAccount closed = savings();
+        closed.close(LocalDate.of(2026, 12, 1));
+        when(getBankAccountsUseCase.findAll()).thenReturn(Flowable.just(closed));
+
+        webTestClient.get().uri("/api/v1/internal/accounts").exchange()
+                .expectStatus().isOk()
+                .expectBody().jsonPath("$[0].closedAt").isEqualTo("2026-12-01");
+    }
+
+    private WebTestClient.ResponseSpec deleteAccount(String accountId) {
+        return webTestClient.delete().uri("/api/v1/accounts/" + accountId)
+                .header("X-Admin-Id", "admin")
+                .exchange();
     }
 }

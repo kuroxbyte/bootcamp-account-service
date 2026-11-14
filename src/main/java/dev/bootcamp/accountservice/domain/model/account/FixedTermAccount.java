@@ -5,6 +5,8 @@ import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import lombok.Getter;
 
+import java.util.Set;
+
 /**
  * Plazo fijo: sin comisión de mantenimiento, un solo movimiento en un día específico del mes. El
  * movimiento se valida en transaction-service.
@@ -31,5 +33,14 @@ public class FixedTermAccount extends BankAccount {
             throw new BusinessRuleException("El día de movimiento debe estar entre 1 y 31");
         }
         this.movementDayOfMonth = movementDayOfMonth;
+    }
+
+    @Override
+    public FixedTermAccount withChanges(AccountChanges changes) {
+        changes.allowOnly("a plazo fijo", Set.of("movementDayOfMonth"));
+        return keepStateIn(new FixedTermAccount(
+                getCustomer(),
+                getOpening(),
+                AccountChanges.required(changes.movementDayOfMonth(), "movementDayOfMonth")));
     }
 }

@@ -5,6 +5,8 @@ import dev.bootcamp.accountservice.domain.model.customer.Customer;
 import dev.bootcamp.accountservice.domain.model.customer.CustomerType;
 import lombok.Getter;
 
+import java.util.Set;
+
 /**
  * Ahorro: sin comisión de mantenimiento, con límite máximo de movimientos mensuales. El límite se
  * valida en transaction-service.
@@ -32,5 +34,14 @@ public class SavingsAccount extends BankAccount {
                     "El límite de movimientos mensuales debe ser mayor a 0");
         }
         this.maxMonthlyMovements = maxMonthlyMovements;
+    }
+
+    @Override
+    public SavingsAccount withChanges(AccountChanges changes) {
+        changes.allowOnly("de ahorro", Set.of("maxMonthlyMovements"));
+        return keepStateIn(new SavingsAccount(
+                getCustomer(),
+                getOpening(),
+                AccountChanges.required(changes.maxMonthlyMovements(), "maxMonthlyMovements")));
     }
 }

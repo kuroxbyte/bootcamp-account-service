@@ -79,4 +79,23 @@ class DebitCardPersistenceAdapterTest {
         adapter.save(card("c1", "a1", List.of())).test().awaitDone(5, TimeUnit.SECONDS)
                 .assertError(DuplicateKeyException.class);
     }
+
+    @Test
+    void closedCardKeepsItsAccountsButFreesThemForAnotherCard() {
+        DebitCard first = adapter.save(card("c1", "a1", List.of("a2"))).blockingGet();
+        first.close(LocalDate.of(2026, 12, 1));
+        adapter.save(first).blockingGet();
+        DebitCard other = adapter.save(card("c2", "x1", List.of())).blockingGet();
+        other.close(LocalDate.of(2026, 12, 1));
+        adapter.save(other).blockingGet();
+
+        DebitCard reloaded = adapter.findById(first.getId()).blockingGet();
+        assertThat(reloaded.isClosed()).isTrue();
+        assertThat(reloaded.getAccountIds()).containsExactly("a1", "a2");
+        adapter.existsByAccountId("a1").test().awaitDone(5, TimeUnit.SECONDS).assertValue(false);
+        assertThat(adapter.findByCustomerId("c1").toList().blockingGet()).isEmpty();
+        // La cuenta liberada se asocia a una tarjeta nueva.
+        adapter.save(card("c1", "a1", List.of())).test().awaitDone(5, TimeUnit.SECONDS)
+                .assertNoErrors();
+    }
 }

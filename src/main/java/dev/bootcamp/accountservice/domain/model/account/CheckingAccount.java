@@ -8,6 +8,7 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Cuenta corriente: con comisión de mantenimiento, sin límite de movimientos mensuales. Si es
@@ -44,6 +45,19 @@ public class CheckingAccount extends BankAccount {
             throw new BusinessRuleException(
                     "Una cuenta empresarial debe tener al menos un titular");
         }
+    }
+
+    @Override
+    public CheckingAccount withChanges(AccountChanges changes) {
+        changes.allowOnly(
+                "corriente",
+                Set.of("maintenanceFee", "holderIds", "authorizedSignerIds"));
+        return keepStateIn(new CheckingAccount(
+                getCustomer(),
+                getOpening(),
+                changes.maintenanceFee(),
+                changes.holderIds(),
+                changes.authorizedSignerIds()));
     }
 
     private static BigDecimal validMaintenanceFee(Customer customer, BigDecimal maintenanceFee) {
